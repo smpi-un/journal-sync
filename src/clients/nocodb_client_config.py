@@ -1,7 +1,20 @@
+import os
+from dotenv import load_dotenv
+
+# Load environment variables from .env file
+load_dotenv()
+
 # NocoDB connection details
-NOCODB_URL = "http://localhost:8080"
-NOCODB_API_TOKEN = "YOUR_NOCODB_API_TOKEN" # Replace with your actual NocoDB API token
-NOCODB_PROJECT_ID = "YOUR_NOCODB_PROJECT_ID" # Replace with your actual NocoDB Project ID
+NOCODB_URL = os.getenv("NOCODB_URL", "http://localhost:8080")
+NOCODB_API_TOKEN = os.getenv("NOCODB_API_TOKEN")
+NOCODB_PROJECT_ID = os.getenv("NOCODB_PROJECT_ID") # In NocoDB this is often the project name or ID
+
+# Validate that required environment variables are set
+if not NOCODB_API_TOKEN:
+    raise ValueError("NOCODB_API_TOKEN is not set in the environment or .env file.")
+if not NOCODB_PROJECT_ID:
+    raise ValueError("NOCODB_PROJECT_ID is not set in the environment or .env file.")
+
 
 NOCODB_JOURNAL_TABLE_NAME = "JournalEntries"
 NOCODB_ATTACHMENT_TABLE_NAME = "Attachments"
@@ -14,8 +27,8 @@ NOCODB_JOURNAL_TABLE_COLUMNS = [
     {"title": "EntryAt", "column_name": "EntryAt", "data_type": "varchar"},
     {"title": "Id", "column_name": "Id", "data_type": "varchar", "pk": True},
     {"title": "Timezone", "column_name": "Timezone", "data_type": "varchar"},
-    {"title": "CreatedAt", "column_name": "CreatedAt", "data_type": "varchar"},
-    {"title": "ModifiedAt", "column_name": "ModifiedAt", "data_type": "varchar"},
+    {"title": "JournalCreatedAt", "column_name": "JournalCreatedAt", "data_type": "varchar"},
+    {"title": "JournalModifiedAt", "column_name": "JournalModifiedAt", "data_type": "varchar"},
     {"title": "TextContent", "column_name": "TextContent", "data_type": "longtext"},
     {"title": "RichTextContent", "column_name": "RichTextContent", "data_type": "longtext"},
     {"title": "Title", "column_name": "Title", "data_type": "varchar"},
@@ -66,8 +79,8 @@ NOCODB_FIELD_NAMES = {
     "entry_at": "EntryAt",
     "id": "Id",
     "timezone": "Timezone",
-    "created_at": "CreatedAt",
-    "modified_at": "ModifiedAt",
+    "created_at": "JournalCreatedAt",
+    "modified_at": "JournalModifiedAt",
     "text_content": "TextContent",
     "rich_text_content": "RichTextContent",
     "title": "Title",

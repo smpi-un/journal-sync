@@ -1,76 +1,29 @@
-# Teable connection details
-TEABLE_API_TOKEN = "teable_accdNvfnVYLi5spZPWP_Ev+j1y2wxuQZg2pBxftyeX+H0bVep+FZgpPReWAM/4o="
-TEABLE_API_URL = "http://localhost:3000/api"
-TEABLE_BASE_ID = "bse6U9m5sgpVUCjA45t"
+import os
+from dotenv import load_dotenv
 
-# NocoDB connection details
-# NOCODB_URL = "http://localhost:8080"
-# API_TOKEN = "1KCGgmxDevRbHSY-W03weuBJaKBnT4m_eQc8xUBi"
-# PROJECT_ID = "pjuurfy8ii46bvj"
+# Load environment variables from .env file
+load_dotenv()
+
+# --- Teable API Configuration ---
+TEABLE_API_URL = os.getenv("TEABLE_API_URL", "https://app.teable.ai/api")
+TEABLE_API_TOKEN = os.getenv("TEABLE_API_TOKEN")
+TEABLE_BASE_ID = os.getenv("TEABLE_BASE_ID")
+
+# Validate that required environment variables are set
+if not TEABLE_API_TOKEN:
+    raise ValueError("TEABLE_API_TOKEN is not set in the environment or .env file.")
+if not TEABLE_BASE_ID:
+    raise ValueError("TEABLE_BASE_ID is not set in the environment or .env file.")
+
+# --- Table and Field Naming ---
 JOURNAL_TABLE_NAME = "JourneyEntries"
 ATTACHMENT_TABLE_NAME = "Attachments"
-ATTACHMENT_LINK_FIELD = "JournalEntry" # Field in Attachments table linking to JourneyEntries
-ATTACHMENT_ORDER_FIELD = "Order" # Field in Attachments table for order
-JOURNAL_ATTACHMENT_FIELD = "Attachments" # Attachment column in JourneyEntries table
 
-
-# Define column structures for automatic table creation
-JOURNAL_TABLE_COLUMNS = [
-    {"name": "EntryAt", "type": "singleLineText"},
-    {"name": "Id", "type": "singleLineText", "isPrimary": True},
-    {"name": "Timezone", "type": "singleLineText"},
-    {"name": "CreatedAt", "type": "singleLineText"},
-    {"name": "ModifiedAt", "type": "singleLineText"},
-    {"name": "TextContent", "type": "longText"},
-    {"name": "RichTextContent", "type": "longText"},
-    {"name": "Title", "type": "singleLineText"},
-    {"name": "Tags", "type": "singleLineText"},
-    {"name": "Notebook", "type": "singleLineText"},
-    {"name": "IsFavorite", "type": "checkbox"},
-    {"name": "IsPinned", "type": "checkbox"},
-    {"name": "MoodLabel", "type": "singleLineText"},
-    {"name": "MoodScore", "type": "number"},
-    {"name": "Activities", "type": "singleLineText"},
-    {"name": "LocationLat", "type": "number"},
-    {"name": "LocationLon", "type": "number"},
-    {"name": "LocationName", "type": "singleLineText"},
-    {"name": "LocationAddress", "type": "longText"},
-    {"name": "LocationAltitude", "type": "number"},
-    {"name": "WeatherTemperature", "type": "number"},
-    {"name": "WeatherCondition", "type": "singleLineText"},
-    {"name": "WeatherHumidity", "type": "number"},
-    {"name": "WeatherPressure", "type": "number"},
-    {"name": "DeviceName", "type": "singleLineText"},
-    {"name": "StepCount", "type": "number"},
-    {"name": JOURNAL_ATTACHMENT_FIELD, "type": "attachment"},
-    {"name": "SourceAppName", "type": "singleLineText"},
-    {"name": "SourceOriginalId", "type": "singleLineText"},
-    {"name": "SourceImportedAt", "type": "singleLineText"},
-    {"name": "SourceRawData", "type": "longText"}
-]
-
-ATTACHMENT_TABLE_COLUMNS = [
-    {"name": "Id", "type": "autoNumber", "isPrimary": True},
-    {"name": "FileName", "type": "singleLineText"},
-    {"name": "FilePath", "type": "singleLineText"},
-    {"name": ATTACHMENT_ORDER_FIELD, "type": "number"}
-]
-
-# Link field definition for Attachments to JournalEntries
-ATTACHMENT_LINK_FIELD_DEFINITION = {
-    "name": ATTACHMENT_LINK_FIELD,
-    "type": "link",
-    "options": {
-        "foreignTableId": None,  # This will be filled dynamically
-        "relationship": "oneMany",
-        "lookup": False
-    }
-}
-
-# Field names for Teable
+# This dictionary maps the JournalEntry model fields to the Teable table field names.
+# This provides a single point of configuration if the field names in Teable change.
 TEABLE_FIELD_NAMES = {
-    "entry_at": "EntryAt",
     "id": "Id",
+    "entry_at": "EntryAt",
     "timezone": "Timezone",
     "created_at": "CreatedAt",
     "modified_at": "ModifiedAt",
@@ -81,7 +34,7 @@ TEABLE_FIELD_NAMES = {
     "notebook": "Notebook",
     "is_favorite": "IsFavorite",
     "is_pinned": "IsPinned",
-    "mood_label": "MoodLabel",
+    "mood_label": "Mood",
     "mood_score": "MoodScore",
     "activities": "Activities",
     "location_lat": "LocationLat",
@@ -89,15 +42,74 @@ TEABLE_FIELD_NAMES = {
     "location_name": "LocationName",
     "location_address": "LocationAddress",
     "location_altitude": "LocationAltitude",
-    "weather_temperature": "WeatherTemperature",
+    "weather_temperature": "WeatherTemp",
     "weather_condition": "WeatherCondition",
     "weather_humidity": "WeatherHumidity",
     "weather_pressure": "WeatherPressure",
     "device_name": "DeviceName",
     "step_count": "StepCount",
-    "media_attachments": JOURNAL_ATTACHMENT_FIELD,
+    "media_attachments": "Attachments",
     "source_app_name": "SourceAppName",
     "source_original_id": "SourceOriginalId",
     "source_imported_at": "SourceImportedAt",
-    "source_raw_data": "SourceRawData"
+    "source_raw_data": "SourceRawData",
+}
+
+# --- Table Schema Definitions ---
+
+# Define the columns for the "JournalEntries" table
+# This is used when the client verifies or creates the table.
+JOURNAL_TABLE_COLUMNS = [
+    {"name": TEABLE_FIELD_NAMES["id"], "type": "singleLineText", "isPrimary": True},
+    {"name": TEABLE_FIELD_NAMES["entry_at"], "type": "date", "options": {"dateFormat": "YYYY-MM-DD HH:mm:ss"}},
+    {"name": TEABLE_FIELD_NAMES["timezone"], "type": "singleLineText"},
+    {"name": TEABLE_FIELD_NAMES["created_at"], "type": "date", "options": {"dateFormat": "YYYY-MM-DD HH:mm:ss"}},
+    {"name": TEABLE_FIELD_NAMES["modified_at"], "type": "date", "options": {"dateFormat": "YYYY-MM-DD HH:mm:ss"}},
+    {"name": TEABLE_FIELD_NAMES["text_content"], "type": "longText"},
+    {"name": TEABLE_FIELD_NAMES["rich_text_content"], "type": "longText"},
+    {"name": TEABLE_FIELD_NAMES["title"], "type": "singleLineText"},
+    {"name": TEABLE_FIELD_NAMES["tags"], "type": "singleLineText"},
+    {"name": TEABLE_FIELD_NAMES["notebook"], "type": "singleLineText"},
+    {"name": TEABLE_FIELD_NAMES["is_favorite"], "type": "checkbox"},
+    {"name": TEABLE_FIELD_NAMES["is_pinned"], "type": "checkbox"},
+    {"name": TEABLE_FIELD_NAMES["mood_label"], "type": "singleLineText"},
+    {"name": TEABLE_FIELD_NAMES["mood_score"], "type": "number", "options": {"format": "decimal", "precision": 1}},
+    {"name": TEABLE_FIELD_NAMES["activities"], "type": "singleLineText"},
+    {"name": TEABLE_FIELD_NAMES["location_lat"], "type": "number", "options": {"format": "decimal", "precision": 8}},
+    {"name": TEABLE_FIELD_NAMES["location_lon"], "type": "number", "options": {"format": "decimal", "precision": 8}},
+    {"name": TEABLE_FIELD_NAMES["location_name"], "type": "singleLineText"},
+    {"name": TEABLE_FIELD_NAMES["location_address"], "type": "longText"},
+    {"name": TEABLE_FIELD_NAMES["location_altitude"], "type": "number", "options": {"format": "decimal", "precision": 2}},
+    {"name": TEABLE_FIELD_NAMES["weather_temperature"], "type": "number", "options": {"format": "decimal", "precision": 1}},
+    {"name": TEABLE_FIELD_NAMES["weather_condition"], "type": "singleLineText"},
+    {"name": TEABLE_FIELD_NAMES["weather_humidity"], "type": "number", "options": {"format": "decimal", "precision": 2}},
+    {"name": TEABLE_FIELD_NAMES["weather_pressure"], "type": "number", "options": {"format": "decimal", "precision": 2}},
+    {"name": TEABLE_FIELD_NAMES["device_name"], "type": "singleLineText"},
+    {"name": TEABLE_FIELD_NAMES["step_count"], "type": "number", "options": {"format": "integer"}},
+    {"name": TEABLE_FIELD_NAMES["media_attachments"], "type": "attachment"},
+    {"name": TEABLE_FIELD_NAMES["source_app_name"], "type": "singleLineText"},
+    {"name": TEABLE_FIELD_NAMES["source_original_id"], "type": "singleLineText"},
+    {"name": TEABLE_FIELD_NAMES["source_imported_at"], "type": "date", "options": {"dateFormat": "YYYY-MM-DD HH:mm:ss"}},
+    {"name": TEABLE_FIELD_NAMES["source_raw_data"], "type": "longText"},
+]
+
+# Define the columns for the "Attachments" table
+ATTACHMENT_TABLE_COLUMNS = [
+    {"name": "Id", "type": "singleLineText", "isPrimary": True},
+    {"name": "Filename", "type": "singleLineText"},
+    {"name": "URL", "type": "singleLineText"},
+    {"name": "MIMEType", "type": "singleLineText"},
+    {"name": "Size", "type": "number", "options": {"format": "integer"}},
+]
+
+# Define the link field to connect Attachments back to JournalEntries
+ATTACHMENT_LINK_FIELD_NAME = "JournalEntry"
+ATTACHMENT_LINK_FIELD_DEFINITION = {
+    "name": ATTACHMENT_LINK_FIELD_NAME,
+    "type": "link",
+    "options": {
+        "foreignTableId": "", # This will be filled in dynamically
+        "relationship": "many-to-one",
+        "foreignTableName": JOURNAL_TABLE_NAME
+    }
 }

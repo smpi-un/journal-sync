@@ -1,5 +1,7 @@
 import os
 import shutil
+import argparse
+import glob
 
 from journal_core.manager import JournalManager
 from clients.teable_client import TeableJournalClient
@@ -78,16 +80,54 @@ def main(source_data_path: str, client_type: str = "teable"):
 
 
 if __name__ == "__main__":
-    sample_folder_path = "/home/smpiun/Documents/journal_teable/sample/VW"
-    if os.path.exists(sample_folder_path):
-        # Example usage: import to Teable
-        print("\n--- Importing to Teable ---")
-        main(sample_folder_path, client_type="teable")
-        
-        # # Example usage: import to NocoDB
-        # print("\n--- Importing to NocoDB ---")
-        # main(sample_zip_path, client_type="nocodb")
+    parser = argparse.ArgumentParser(
+        description="Import journal entries from Journey.Cloud export directories into a specified client (Teable or NocoDB)."
+    )
+    
+    parser.add_argument(
+        "source_paths",
+        type=str,
+        nargs='+',
+        help="One or more paths to the directories containing extracted journal entries. Wildcards are supported."
+    )
+    
+    parser.add_argument(
+        "--client",
+        type=str,
+        default="teable",
+        choices=["teable", "nocodb"],
+        help="The client to which the journal entries will be imported. Defaults to 'teable'."
+    )
+    
+    args = parser.parse_args()
+    
+    # Expand wildcards and get a list of all source directories
+    all_source_dirs = []
+    for path_pattern in args.source_paths:
+        found_paths = glob.glob(path_pattern)
+        if not found_paths:
+            print(f"Warning: No directories found matching pattern: {path_pattern}")
+            continue
+        for path in found_paths:
+            if os.path.isdir(path):
+                all_source_dirs.append(path)
+            else:
+                print(f"Warning: Skipping non-directory path: {path}")
 
-    else:
-        print(f"Error: Sample ZIP file not found at {sample_zip_path}")
-        print("Please provide the correct path to your Journey.Cloud exported ZIP file.")
+    if not all_source_dirs:
+        print("No valid source directories found to process. Exiting.")
+        exit()
+
+    print(f"Found {len(all_source_dirs)} source directories to process.")
+
+    # Process each source directory
+    for source_path in all_source_dirs:
+        print(f"\n--- Processing directory: {source_path} ---")
+        try:
+            main(source_path, client_type=args.client)
+        except FileNotFoundError as e:
+            print(f"Error processing {source_path}: {e}")
+        except Exception as e:
+            print(f"An unexpected error occurred while processing {source_path}: {e}")
+
+    print("\nAll processing complete.")

@@ -2,7 +2,8 @@ import os
 import zipfile
 import json
 import shutil
-import argparse  # コマンドライン引数を処理するために追加
+import argparse
+import glob  # ワイルドカード展開のために追加
 from collections import defaultdict
 
 def unzip_and_update_json(zip_file_path, output_dir):
@@ -148,24 +149,50 @@ if __name__ == "__main__":
         description="ZIPファイルを解凍し、指定されたフォルダ構造内のJSONファイルに添付ファイルリスト（ZIP内の順序）を追記します。"
     )
     
-    # 必須の引数: 1. zipファイルのパス
+    # 必須の引数: 1. zipファイルのパス (複数・ワイルドカード可)
     parser.add_argument(
-        "zip_file_path", 
+        "zip_file_paths", 
         type=str,
-        help="処理対象のZIPファイルのパス"
+        nargs='+',  # 1つ以上の引数を受け取る
+        help="処理対象のZIPファイルのパス。複数指定やワイルドカード（例: 'downloads/*.zip'）も使用可能です。"
     )
     
-    # 必須の引数: 2. 出力先のディレクトリパス
+    # 必須の引数: 2. 出力先のベースディレクトリパス
     parser.add_argument(
         "output_dir",
         type=str,
-        help="解凍先のディレクトリパス（存在しない場合は作成されます）"
+        help="解凍先のベースディレクトリパス。この直下に各ZIPファイル名のフォルダが作成されます。"
     )
     
     # 引数を解析
     args = parser.parse_args()
     
     print("--- 解凍ツールの実行 ---")
+
+    # ワイルドカードを展開してファイルのリストを作成
+    all_files = []
+    for path_pattern in args.zip_file_paths:
+        # glob.glob はワイルドカードを展開し、マッチするファイルのリストを返す
+        # パターンにワイルドカードが含まれていなくても、単一要素のリストとして正しく機能する
+        found_files = glob.glob(path_pattern, recursive=True)
+        if not found_files:
+            print(f"警告: パターン '{path_pattern}' に一致するファイルが見つかりませんでした。")
+        all_files.extend(found_files)
+
+    if not all_files:
+        print("処理対象のファイルがありません。終了します。")
+        exit()
+
+    print(f"合計 {len(all_files)} 件のZIPファイルを処理します。")
     
-    # メイン処理を実行
-    unzip_and_update_json(args.zip_file_path, args.output_dir)
+    # 見つかった各ファイルに対してメイン処理を実行
+    for zip_file_path in all_files:
+        print(f"\n--- ファイル '{zip_file_path}' の処理を開始 ---")
+        
+        # 出力サブディレクトリ名を決定 (例: /path/to/output/archive)
+        zip_filename = os.path.basename(zip_file_path)
+        sub_dir_name = os.path.splitext(zip_filename)[0]
+        specific_output_dir = os.path.join(args.output_dir, sub_dir_name)
+        
+        # メイン処理を実行
+        unzip_and_update_json(zip_file_path, specific_output_dir)

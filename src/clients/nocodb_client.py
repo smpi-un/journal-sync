@@ -1,3 +1,4 @@
+import sys
 import requests
 import json
 from typing import List, Dict, Any, Optional
@@ -17,14 +18,15 @@ class NocoDBJournalClient(AbstractJournalClient):
         self.api_token = NOCODB_API_TOKEN
         self.project_id = NOCODB_PROJECT_ID
         self.headers = {"xc-token": self.api_token}
-        self.base_meta_url_v1 = f"{self.nocodb_url}/api/v1/db/meta/projects/{self.project_id}"
         self.journal_table_id = None
         self.journal_table_uuid = None
 
     def _handle_request_error(self, e, action_description="request"):
         print(f"Error during {action_description}: {e}")
         if e.response:
+            print(f"Request URL: {e.request.url}")
             print(f"Response content: {e.response.text}")
+        sys.stdout.flush()
         return None
 
     def _get_journal_table_meta(self):
@@ -37,7 +39,10 @@ class NocoDBJournalClient(AbstractJournalClient):
             # NocoDB v2 API uses UUID for some operations, need to fetch detailed meta
             detailed_meta = self._get_detailed_table_meta(self.journal_table_id)
             if detailed_meta:
-                self.journal_table_uuid = detailed_meta["uuid"]
+                self.journal_table_uuid = detailed_meta.get("uuid")
+                if not self.journal_table_uuid:
+                    print(f"Info: NocoDB table '{NOCODB_JOURNAL_TABLE_NAME}' is missing UUID. Falling back to Table ID '{self.journal_table_id}'.")
+                    self.journal_table_uuid = self.journal_table_id
                 return {"id": self.journal_table_id, "uuid": self.journal_table_uuid}
         
         # If table not found, try to create it
@@ -45,7 +50,10 @@ class NocoDBJournalClient(AbstractJournalClient):
         created_table_meta = self.create_table_if_not_exists(NOCODB_JOURNAL_TABLE_NAME, NOCODB_JOURNAL_TABLE_COLUMNS)
         if created_table_meta:
             self.journal_table_id = created_table_meta["id"]
-            self.journal_table_uuid = created_table_meta["uuid"]
+            self.journal_table_uuid = created_table_meta.get("uuid")
+            if not self.journal_table_uuid:
+                print(f"Info: NocoDB table '{NOCODB_JOURNAL_TABLE_NAME}' is missing UUID after creation. Falling back to Table ID '{self.journal_table_id}'.")
+                self.journal_table_uuid = self.journal_table_id
             return {"id": self.journal_table_id, "uuid": self.journal_table_uuid}
         
         raise ValueError(f"Could not find or create journal table '{NOCODB_JOURNAL_TABLE_NAME}' in NocoDB.")
@@ -56,7 +64,8 @@ class NocoDBJournalClient(AbstractJournalClient):
         try:
             response = requests.get(detailed_meta_url, headers=self.headers)
             response.raise_for_status()
-            return response.json()
+            detailed_meta_data = response.json()
+            return detailed_meta_data
         except requests.exceptions.RequestException as e:
             return self._handle_request_error(e, f"fetching detailed metadata for table ID {table_id}")
 
@@ -115,8 +124,8 @@ class NocoDBJournalClient(AbstractJournalClient):
 
     def get_existing_entry_ids(self) -> List[str]:
         table_meta = self._get_journal_table_meta()
-        table_uuid = table_meta["uuid"]
-        all_records = self.get_all_records(table_uuid)
+        table_id = table_meta["id"]
+        all_records = self.get_all_records(table_id)
         if all_records:
             # Assuming 'Id' is the field name for the unique ID in NocoDB
             return [str(record[NOCODB_FIELD_NAMES["id"]]) for record in all_records if NOCODB_FIELD_NAMES["id"] in record]
@@ -124,8 +133,8 @@ class NocoDBJournalClient(AbstractJournalClient):
 
     def get_existing_entries_with_modified_at(self) -> Dict[str, datetime]:
         table_meta = self._get_journal_table_meta()
-        table_uuid = table_meta["uuid"]
-        all_records = self.get_all_records(table_uuid)
+        table_id = table_meta["id"]
+        all_records = self.get_all_records(table_id)
         existing_data = {}
         if all_records:
             for record in all_records:
@@ -156,9 +165,10 @@ class NocoDBJournalClient(AbstractJournalClient):
     # --- Original NocoDBClient methods, adapted for NocoDBJournalClient ---
 
     def get_table_meta(self, table_name):
-        """Gets metadata for the specified table."""
+        """Gets metadata for the specified table using v2 API."""
+        list_tables_url = f"{self.nocodb_url}/api/v2/meta/bases/{self.project_id}/tables"
         try:
-            response = requests.get(f"{self.base_meta_url_v1}/tables", headers=self.headers)
+            response = requests.get(list_tables_url, headers=self.headers)
             response.raise_for_status()
             tables = response.json()["list"]
             for table in tables:
@@ -169,8 +179,8 @@ class NocoDBJournalClient(AbstractJournalClient):
             return self._handle_request_error(e, f"listing tables for {table_name}")
 
     def create_table(self, table_name, columns_definition):
-        """Creates a new table in NocoDB."""
-        create_table_url = f"{self.base_meta_url_v1}/tables"
+        """Creates a new table in NocoDB using v2 API."""
+        create_table_url = f"{self.nocodb_url}/api/v2/meta/bases/{self.project_id}/tables"
         payload = {
             "title": table_name,
             "columns": columns_definition
@@ -261,38 +271,40 @@ class NocoDBJournalClient(AbstractJournalClient):
         except requests.exceptions.RequestException as e:
             return self._handle_request_error(e, f"linking attachment {attachment_record_id} to journal entry {journal_entry_id}")
 
-    def get_all_records(self, table_uuid):
-        """Gets all records from the specified table using table UUID."""
-        list_records_url_v2 = f"{self.nocodb_url}/api/v2/tables/{table_uuid}/records"
+    def get_all_records(self, table_id):
+        """Gets all records from the specified table using table ID."""
+        list_records_url_v2 = f"{self.nocodb_url}/api/v2/tables/{table_id}/records"
         print(f"Attempting to get all existing records from URL: {list_records_url_v2}")
         try:
             response = requests.get(list_records_url_v2, headers=self.headers)
             response.raise_for_status()
             return response.json()["list"]
         except requests.exceptions.RequestException as e:
-            return self._handle_request_error(e, f"getting existing records from table UUID {table_uuid}")
+            return self._handle_request_error(e, f"getting existing records from table ID {table_id}")
 
-    def create_records(self, table_uuid, records):
-        """Creates new records in the specified table using table UUID."""
+    def create_records(self, table_id, records):
+        """Creates new records in the specified table using table ID."""
+        print(records)
         if not records:
             return
         print(f"Creating {len(records)} new records...")
         try:
-            create_url_v2 = f"{self.nocodb_url}/api/v2/tables/{table_uuid}/records"
+            create_url_v2 = f"{self.nocodb_url}/api/v2/tables/{table_id}/records"
             response = requests.post(create_url_v2, headers=self.headers, json=records)
+            print(response.text)
             response.raise_for_status()
             print("New records created successfully.")
             return response.json()
         except requests.exceptions.RequestException as e:
             return self._handle_request_error(e, "creating new records")
 
-    def update_records(self, table_uuid, records):
-        """Updates existing records in the specified table using table UUID."""
+    def update_records(self, table_id, records):
+        """Updates existing records in the specified table using table ID."""
         if not records:
             return
         print(f"Updating {len(records)} existing records...")
         try:
-            update_url_v2 = f"{self.nocodb_url}/api/v2/tables/{table_uuid}/records"
+            update_url_v2 = f"{self.nocodb_url}/api/v2/tables/{table_id}/records"
             response = requests.patch(update_url_v2, headers=self.headers, json=records)
             response.raise_for_status()
             print("Existing records updated successfully.")

@@ -20,6 +20,7 @@ class TeableJournalClient(AbstractJournalClient):
         self.base_id = TEABLE_BASE_ID
         self.journal_table_id = None
         self.attachment_table_id = None
+        self.attachment_field_id = None
         self._ensure_tables_exist()
 
     def _ensure_tables_exist(self):
@@ -38,26 +39,38 @@ class TeableJournalClient(AbstractJournalClient):
         print(f"Table '{JOURNAL_TABLE_NAME}' ID: {self.journal_table_id}")
         self._verify_primary_key_setting(self.journal_table_id, "Id")
 
-        # Ensure Attachments table exists and is linked
-        attachment_table = self.get_table_by_name(ATTACHMENT_TABLE_NAME)
-        if not attachment_table:
-            print(f"Table '{ATTACHMENT_TABLE_NAME}' not found, creating it...")
-            from clients.teable_client_config import ATTACHMENT_TABLE_COLUMNS, ATTACHMENT_LINK_FIELD, ATTACHMENT_LINK_FIELD_DEFINITION
-            
-            # Deep copy to avoid modifying the original config list
-            attachment_cols_to_create = [col.copy() for col in ATTACHMENT_TABLE_COLUMNS]
-            link_field_def = ATTACHMENT_LINK_FIELD_DEFINITION.copy()
-            link_field_def["options"]["foreignTableId"] = self.journal_table_id
-            attachment_cols_to_create.append(link_field_def)
-
-            attachment_table = self.create_table(ATTACHMENT_TABLE_NAME, attachment_cols_to_create)
-            if not attachment_table:
-                raise ValueError(f"Failed to create table '{ATTACHMENT_TABLE_NAME}'.")
+        # Get and store the Attachments field ID
+        fields = self.get_table_fields(self.journal_table_id)
+        if fields:
+            for field in fields:
+                if field.get('name') == TEABLE_FIELD_NAMES['media_attachments']:
+                    self.attachment_field_id = field.get('id')
+                    break
+        if not self.attachment_field_id:
+            print(f"Warning: Could not find the field ID for '{TEABLE_FIELD_NAMES['media_attachments']}'. File uploads will fail.")
         else:
-            print(f"Table '{ATTACHMENT_TABLE_NAME}' already exists.")
-        self.attachment_table_id = attachment_table['id']
-        print(f"Table '{ATTACHMENT_TABLE_NAME}' ID: {self.attachment_table_id}")
-        self._verify_primary_key_setting(self.attachment_table_id, "Id")
+            print(f"Found Attachment Field '{TEABLE_FIELD_NAMES['media_attachments']}' with ID: {self.attachment_field_id}")
+
+        # Ensure Attachments table exists and is linked
+        # attachment_table = self.get_table_by_name(ATTACHMENT_TABLE_NAME)
+        # if not attachment_table:
+        #     print(f"Table '{ATTACHMENT_TABLE_NAME}' not found, creating it...")
+        #     from clients.teable_client_config import ATTACHMENT_TABLE_COLUMNS, ATTACHMENT_LINK_FIELD, ATTACHMENT_LINK_FIELD_DEFINITION
+        #     
+        #     # Deep copy to avoid modifying the original config list
+        #     attachment_cols_to_create = [col.copy() for col in ATTACHMENT_TABLE_COLUMNS]
+        #     link_field_def = ATTACHMENT_LINK_FIELD_DEFINITION.copy()
+        #     link_field_def["options"]["foreignTableId"] = self.journal_table_id
+        #     attachment_cols_to_create.append(link_field_def)
+
+        #     attachment_table = self.create_table(ATTACHMENT_TABLE_NAME, attachment_cols_to_create)
+        #     if not attachment_table:
+        #         raise ValueError(f"Failed to create table '{ATTACHMENT_TABLE_NAME}'.")
+        # else:
+        #     print(f"Table '{ATTACHMENT_TABLE_NAME}' already exists.")
+        # self.attachment_table_id = attachment_table['id']
+        # print(f"Table '{ATTACHMENT_TABLE_NAME}' ID: {self.attachment_table_id}")
+        # self._verify_primary_key_setting(self.attachment_table_id, "Id")
 
     def _verify_primary_key_setting(self, table_id: str, field_name: str):
         """
@@ -83,12 +96,12 @@ class TeableJournalClient(AbstractJournalClient):
             self._ensure_tables_exist() # Re-run setup if for some reason ID is not set
         return self.journal_table_id
 
-    def _journal_entry_to_teable_record(self, entry: JournalEntry) -> Dict[str, Any]:
+    def _journal_entry_to_teable_record(self, entry: JournalEntry, include_attachments=False) -> Dict[str, Any]:
         record_fields = {}
         
         # Explicitly map JournalEntry fields to Teable column names and types
         if entry.id is not None: record_fields[TEABLE_FIELD_NAMES["id"]] = entry.id
-        print(entry.id)
+        # print(entry.id) # Reduce noise
         if entry.entry_at is not None: record_fields[TEABLE_FIELD_NAMES["entry_at"]] = entry.entry_at.isoformat()
         if entry.timezone is not None: record_fields[TEABLE_FIELD_NAMES["timezone"]] = entry.timezone
         if entry.created_at is not None: record_fields[TEABLE_FIELD_NAMES["created_at"]] = entry.created_at.isoformat()
@@ -114,28 +127,88 @@ class TeableJournalClient(AbstractJournalClient):
         if entry.weather_pressure is not None: record_fields[TEABLE_FIELD_NAMES["weather_pressure"]] = entry.weather_pressure
         if entry.device_name is not None: record_fields[TEABLE_FIELD_NAMES["device_name"]] = entry.device_name
         if entry.step_count is not None: record_fields[TEABLE_FIELD_NAMES["step_count"]] = entry.step_count
-        # Media attachments will be handled separately or stored as JSON string if not direct attachment
-        if entry.media_attachments: record_fields[TEABLE_FIELD_NAMES["media_attachments"]] = json.dumps(entry.media_attachments)
+        # Attachments are handled in register_entries
         if entry.source_app_name is not None: record_fields[TEABLE_FIELD_NAMES["source_app_name"]] = entry.source_app_name
         if entry.source_original_id is not None: record_fields[TEABLE_FIELD_NAMES["source_original_id"]] = entry.source_original_id
         if entry.source_imported_at is not None: record_fields[TEABLE_FIELD_NAMES["source_imported_at"]] = entry.source_imported_at.isoformat()
         if entry.source_raw_data is not None: record_fields[TEABLE_FIELD_NAMES["source_raw_data"]] = json.dumps(entry.source_raw_data) # Store raw data as JSON string
 
-        return {"id": entry.id, "fields": record_fields}
+        return {"fields": record_fields}
 
     def register_entry(self, entry: JournalEntry) -> Any:
-        table_id = self._get_journal_table_id()
-        teable_record = self._journal_entry_to_teable_record(entry)
-        # print(teable_record)
-        response = self.create_records(table_id, [teable_record])
-        return response
+        return self.register_entries([entry])
 
     def register_entries(self, entries: List[JournalEntry]) -> List[Any]:
         table_id = self._get_journal_table_id()
-        teable_records = [self._journal_entry_to_teable_record(entry) for entry in entries]
-        # print(teable_records)
-        response = self.create_records(table_id, teable_records)
-        return response
+        if not table_id:
+            raise ValueError("Journal table ID is not set.")
+
+        records_to_create_without_attachments = []
+        entries_with_attachments = []
+        
+        for entry in entries:
+            if entry.media_attachments:
+                entries_with_attachments.append(entry)
+            else:
+                records_to_create_without_attachments.append(self._journal_entry_to_teable_record(entry))
+
+        all_results = []
+
+        # Batch create records without attachments
+        if records_to_create_without_attachments:
+            print(f"Registering {len(records_to_create_without_attachments)} entries without attachments...")
+            try:
+                response = self.create_records(table_id, records_to_create_without_attachments)
+                all_results.extend(response.get('records', []))
+            except Exception as e:
+                print(f"Error batch-creating records: {e}")
+
+        # Handle entries with attachments one by one
+        if entries_with_attachments:
+            if not self.attachment_field_id:
+                print("Error: Attachment field ID is not available. Cannot upload files.")
+                # Optionally, create the records without attachments anyway
+                for entry in entries_with_attachments:
+                    record_payload = self._journal_entry_to_teable_record(entry)
+                    try:
+                        response = self.create_records(table_id, [record_payload])
+                        all_results.extend(response.get('records', []))
+                    except Exception as e:
+                        print(f"Error creating record for entry {entry.id} (attachments skipped): {e}")
+                return all_results
+
+            print(f"Registering {len(entries_with_attachments)} entries with attachments one by one...")
+            for entry in entries_with_attachments:
+                # 1. Create the record without attachments first
+                record_payload = self._journal_entry_to_teable_record(entry)
+                try:
+                    print(f"Creating record for entry {entry.id}...")
+                    response = self.create_records(table_id, [record_payload])
+                    created_records = response.get('records')
+                    if not created_records:
+                        print(f"Failed to create record for entry {entry.id}, skipping attachment upload.")
+                        continue
+                    
+                    record_id = created_records[0]['id']
+                    all_results.append(created_records[0])
+
+                    # 2. Upload attachments to the newly created record
+                    print(f"Uploading {len(entry.media_attachments)} attachments for record {record_id}...")
+                    for attachment in entry.media_attachments:
+                        file_path = attachment.get('path')
+                        if file_path and os.path.exists(file_path):
+                            try:
+                                self.upload_file(table_id, record_id, self.attachment_field_id, file_path)
+                                print(f"  Successfully uploaded {os.path.basename(file_path)}")
+                            except Exception as e:
+                                print(f"  Error uploading file {file_path} for record {record_id}: {e}")
+                        else:
+                            print(f"  Warning: Attachment file not found or path is missing: {file_path}")
+
+                except Exception as e:
+                    print(f"Error processing entry {entry.id} with attachments: {e}")
+        
+        return all_results
 
     def get_existing_entry_ids(self) -> List[str]:
         table_id = self._get_journal_table_id()
@@ -219,6 +292,7 @@ class TeableJournalClient(AbstractJournalClient):
     def create_records(self, table_id, records):
         # POST /base/{baseId}/table/{tableId}/record
         # print("================") # Commented out for less verbose output
+        print(records)
         return self._make_request("POST", f"/table/{table_id}/record", json_data={"records": records})
 
     def update_records(self, table_id, records):

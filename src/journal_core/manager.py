@@ -47,16 +47,20 @@ class JournalManager:
         registered_results = []
         if entries_to_register:
             print(f"Registering {len(entries_to_register)} new entries with journal client: {type(self.journal_client).__name__}")
-            registered_results.extend(self.journal_client.register_entries(entries_to_register))
-            print(f"Successfully registered {len(registered_results)} new entries.")
+            newly_registered = self.journal_client.register_entries(entries_to_register)
+            if newly_registered:
+                registered_results.extend(newly_registered)
+                print(f"Successfully registered {len(registered_results)} new entries.")
         else:
             print("No new entries to register.")
 
         updated_results = []
         if entries_to_update:
             print(f"Updating {len(entries_to_update)} existing entries with journal client: {type(self.journal_client).__name__}")
-            updated_results.extend(self.journal_client.update_entries(entries_to_update))
-            print(f"Successfully updated {len(updated_results)} existing entries.")
+            newly_updated = self.journal_client.update_entries(entries_to_update)
+            if newly_updated:
+                updated_results.extend(newly_updated)
+                print(f"Successfully updated {len(updated_results)} existing entries.")
         else:
             print("No entries to update.")
 
