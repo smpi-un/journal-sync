@@ -1,4 +1,5 @@
 import os
+
 from dotenv import load_dotenv
 
 # Load environment variables from .env file
@@ -7,7 +8,9 @@ load_dotenv()
 # NocoDB connection details
 NOCODB_URL = os.getenv("NOCODB_URL", "http://localhost:8080")
 NOCODB_API_TOKEN = os.getenv("NOCODB_API_TOKEN")
-NOCODB_PROJECT_ID = os.getenv("NOCODB_PROJECT_ID") # In NocoDB this is often the project name or ID
+NOCODB_PROJECT_ID = os.getenv(
+    "NOCODB_PROJECT_ID"
+)  # In NocoDB this is often the project name or ID
 
 # Validate that required environment variables are set
 if not NOCODB_API_TOKEN:
@@ -18,19 +21,35 @@ if not NOCODB_PROJECT_ID:
 
 NOCODB_JOURNAL_TABLE_NAME = "JournalEntries"
 NOCODB_ATTACHMENT_TABLE_NAME = "Attachments"
-NOCODB_ATTACHMENT_LINK_FIELD = "JournalEntry" # Field in Attachments table linking to JournalEntries
-NOCODB_ATTACHMENT_ORDER_FIELD = "Order" # Field in Attachments table for order
-NOCODB_JOURNAL_ATTACHMENT_FIELD = "Attachments" # Attachment column in JournalEntries table
+NOCODB_ATTACHMENT_LINK_FIELD = (
+    "JournalEntry"  # Field in Attachments table linking to JournalEntries
+)
+NOCODB_ATTACHMENT_ORDER_FIELD = "Order"  # Field in Attachments table for order
+NOCODB_JOURNAL_ATTACHMENT_FIELD = (
+    "Attachments"  # Attachment column in JournalEntries table
+)
 
 # Define column structures for automatic table creation
 NOCODB_JOURNAL_TABLE_COLUMNS = [
     {"title": "EntryAt", "column_name": "EntryAt", "data_type": "varchar"},
     {"title": "Id", "column_name": "Id", "data_type": "varchar", "pk": True},
     {"title": "Timezone", "column_name": "Timezone", "data_type": "varchar"},
-    {"title": "JournalCreatedAt", "column_name": "JournalCreatedAt", "data_type": "varchar"},
-    {"title": "JournalModifiedAt", "column_name": "JournalModifiedAt", "data_type": "varchar"},
+    {
+        "title": "JournalCreatedAt",
+        "column_name": "JournalCreatedAt",
+        "data_type": "varchar",
+    },
+    {
+        "title": "JournalModifiedAt",
+        "column_name": "JournalModifiedAt",
+        "data_type": "varchar",
+    },
     {"title": "TextContent", "column_name": "TextContent", "data_type": "longtext"},
-    {"title": "RichTextContent", "column_name": "RichTextContent", "data_type": "longtext"},
+    {
+        "title": "RichTextContent",
+        "column_name": "RichTextContent",
+        "data_type": "longtext",
+    },
     {"title": "Title", "column_name": "Title", "data_type": "varchar"},
     {"title": "Tags", "column_name": "Tags", "data_type": "varchar"},
     {"title": "Notebook", "column_name": "Notebook", "data_type": "varchar"},
@@ -42,26 +61,72 @@ NOCODB_JOURNAL_TABLE_COLUMNS = [
     {"title": "LocationLat", "column_name": "LocationLat", "data_type": "decimal"},
     {"title": "LocationLon", "column_name": "LocationLon", "data_type": "decimal"},
     {"title": "LocationName", "column_name": "LocationName", "data_type": "varchar"},
-    {"title": "LocationAddress", "column_name": "LocationAddress", "data_type": "longtext"},
-    {"title": "LocationAltitude", "column_name": "LocationAltitude", "data_type": "decimal"},
-    {"title": "WeatherTemperature", "column_name": "WeatherTemperature", "data_type": "decimal"},
-    {"title": "WeatherCondition", "column_name": "WeatherCondition", "data_type": "varchar"},
-    {"title": "WeatherHumidity", "column_name": "WeatherHumidity", "data_type": "decimal"},
-    {"title": "WeatherPressure", "column_name": "WeatherPressure", "data_type": "decimal"},
+    {
+        "title": "LocationAddress",
+        "column_name": "LocationAddress",
+        "data_type": "longtext",
+    },
+    {
+        "title": "LocationAltitude",
+        "column_name": "LocationAltitude",
+        "data_type": "decimal",
+    },
+    {
+        "title": "WeatherTemperature",
+        "column_name": "WeatherTemperature",
+        "data_type": "decimal",
+    },
+    {
+        "title": "WeatherCondition",
+        "column_name": "WeatherCondition",
+        "data_type": "varchar",
+    },
+    {
+        "title": "WeatherHumidity",
+        "column_name": "WeatherHumidity",
+        "data_type": "decimal",
+    },
+    {
+        "title": "WeatherPressure",
+        "column_name": "WeatherPressure",
+        "data_type": "decimal",
+    },
     {"title": "DeviceName", "column_name": "DeviceName", "data_type": "varchar"},
     {"title": "StepCount", "column_name": "StepCount", "data_type": "int"},
-    {"title": "MediaAttachmentsJson", "column_name": "MediaAttachmentsJson", "data_type": "longtext"},
+    {
+        "title": "MediaAttachmentsJson",
+        "column_name": "MediaAttachmentsJson",
+        "data_type": "longtext",
+    },
     {"title": "SourceAppName", "column_name": "SourceAppName", "data_type": "varchar"},
-    {"title": "SourceOriginalId", "column_name": "SourceOriginalId", "data_type": "varchar"},
-    {"title": "SourceImportedAt", "column_name": "SourceImportedAt", "data_type": "varchar"},
-    {"title": "SourceRawData", "column_name": "SourceRawData", "data_type": "longtext"}
+    {
+        "title": "SourceOriginalId",
+        "column_name": "SourceOriginalId",
+        "data_type": "varchar",
+    },
+    {
+        "title": "SourceImportedAt",
+        "column_name": "SourceImportedAt",
+        "data_type": "varchar",
+    },
+    {"title": "SourceRawData", "column_name": "SourceRawData", "data_type": "longtext"},
 ]
 
 NOCODB_ATTACHMENT_TABLE_COLUMNS = [
-    {"title": "Id", "column_name": "Id", "data_type": "int", "pk": True, "auto_increment": True},
+    {
+        "title": "Id",
+        "column_name": "Id",
+        "data_type": "int",
+        "pk": True,
+        "auto_increment": True,
+    },
     {"title": "FileName", "column_name": "FileName", "data_type": "varchar"},
     {"title": "FilePath", "column_name": "FilePath", "data_type": "varchar"},
-    {"title": NOCODB_ATTACHMENT_ORDER_FIELD, "column_name": NOCODB_ATTACHMENT_ORDER_FIELD, "data_type": "int"}
+    {
+        "title": NOCODB_ATTACHMENT_ORDER_FIELD,
+        "column_name": NOCODB_ATTACHMENT_ORDER_FIELD,
+        "data_type": "int",
+    },
 ]
 
 # Link field definition for Attachments to JournalEntries
@@ -69,9 +134,9 @@ NOCODB_ATTACHMENT_LINK_FIELD_DEFINITION = {
     "title": NOCODB_ATTACHMENT_LINK_FIELD,
     "column_name": NOCODB_ATTACHMENT_LINK_FIELD,
     "data_type": "link",
-    "type": "manyToOne", # Assuming many attachments to one journal entry
+    "type": "manyToOne",  # Assuming many attachments to one journal entry
     "fk_table_name": NOCODB_JOURNAL_TABLE_NAME,
-    "fk_column_name": "Id" # Link to the primary key of the JournalEntries table
+    "fk_column_name": "Id",  # Link to the primary key of the JournalEntries table
 }
 
 # Field names mapping for NocoDB
@@ -106,5 +171,5 @@ NOCODB_FIELD_NAMES = {
     "source_app_name": "SourceAppName",
     "source_original_id": "SourceOriginalId",
     "source_imported_at": "SourceImportedAt",
-    "source_raw_data": "SourceRawData"
+    "source_raw_data": "SourceRawData",
 }

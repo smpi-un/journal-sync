@@ -1,11 +1,12 @@
 import os
+
 from dotenv import load_dotenv
 
 # Load environment variables from .env file
 load_dotenv()
 
 # --- Teable API Configuration ---
-TEABLE_API_URL = os.getenv("TEABLE_API_URL", "https://app.teable.ai/api")
+TEABLE_API_URL = os.getenv("TEABLE_API_URL", "https://app.teable.ai")
 TEABLE_API_TOKEN = os.getenv("TEABLE_API_TOKEN")
 TEABLE_BASE_ID = os.getenv("TEABLE_BASE_ID")
 
@@ -61,10 +62,22 @@ TEABLE_FIELD_NAMES = {
 # This is used when the client verifies or creates the table.
 JOURNAL_TABLE_COLUMNS = [
     {"name": TEABLE_FIELD_NAMES["id"], "type": "singleLineText", "isPrimary": True},
-    {"name": TEABLE_FIELD_NAMES["entry_at"], "type": "date", "options": {"dateFormat": "YYYY-MM-DD HH:mm:ss"}},
+    {
+        "name": TEABLE_FIELD_NAMES["entry_at"],
+        "type": "date",
+        "options": {"dateFormat": "YYYY-MM-DD HH:mm:ss"},
+    },
     {"name": TEABLE_FIELD_NAMES["timezone"], "type": "singleLineText"},
-    {"name": TEABLE_FIELD_NAMES["created_at"], "type": "date", "options": {"dateFormat": "YYYY-MM-DD HH:mm:ss"}},
-    {"name": TEABLE_FIELD_NAMES["modified_at"], "type": "date", "options": {"dateFormat": "YYYY-MM-DD HH:mm:ss"}},
+    {
+        "name": TEABLE_FIELD_NAMES["created_at"],
+        "type": "date",
+        "options": {"dateFormat": "YYYY-MM-DD HH:mm:ss"},
+    },
+    {
+        "name": TEABLE_FIELD_NAMES["modified_at"],
+        "type": "date",
+        "options": {"dateFormat": "YYYY-MM-DD HH:mm:ss"},
+    },
     {"name": TEABLE_FIELD_NAMES["text_content"], "type": "longText"},
     {"name": TEABLE_FIELD_NAMES["rich_text_content"], "type": "longText"},
     {"name": TEABLE_FIELD_NAMES["title"], "type": "singleLineText"},
@@ -73,23 +86,59 @@ JOURNAL_TABLE_COLUMNS = [
     {"name": TEABLE_FIELD_NAMES["is_favorite"], "type": "checkbox"},
     {"name": TEABLE_FIELD_NAMES["is_pinned"], "type": "checkbox"},
     {"name": TEABLE_FIELD_NAMES["mood_label"], "type": "singleLineText"},
-    {"name": TEABLE_FIELD_NAMES["mood_score"], "type": "number", "options": {"format": "decimal", "precision": 1}},
+    {
+        "name": TEABLE_FIELD_NAMES["mood_score"],
+        "type": "number",
+        "options": {"format": "decimal", "precision": 1},
+    },
     {"name": TEABLE_FIELD_NAMES["activities"], "type": "singleLineText"},
-    {"name": TEABLE_FIELD_NAMES["location_lat"], "type": "number", "options": {"format": "decimal", "precision": 8}},
-    {"name": TEABLE_FIELD_NAMES["location_lon"], "type": "number", "options": {"format": "decimal", "precision": 8}},
+    {
+        "name": TEABLE_FIELD_NAMES["location_lat"],
+        "type": "number",
+        "options": {"format": "decimal", "precision": 8},
+    },
+    {
+        "name": TEABLE_FIELD_NAMES["location_lon"],
+        "type": "number",
+        "options": {"format": "decimal", "precision": 8},
+    },
     {"name": TEABLE_FIELD_NAMES["location_name"], "type": "singleLineText"},
     {"name": TEABLE_FIELD_NAMES["location_address"], "type": "longText"},
-    {"name": TEABLE_FIELD_NAMES["location_altitude"], "type": "number", "options": {"format": "decimal", "precision": 2}},
-    {"name": TEABLE_FIELD_NAMES["weather_temperature"], "type": "number", "options": {"format": "decimal", "precision": 1}},
+    {
+        "name": TEABLE_FIELD_NAMES["location_altitude"],
+        "type": "number",
+        "options": {"format": "decimal", "precision": 2},
+    },
+    {
+        "name": TEABLE_FIELD_NAMES["weather_temperature"],
+        "type": "number",
+        "options": {"format": "decimal", "precision": 1},
+    },
     {"name": TEABLE_FIELD_NAMES["weather_condition"], "type": "singleLineText"},
-    {"name": TEABLE_FIELD_NAMES["weather_humidity"], "type": "number", "options": {"format": "decimal", "precision": 2}},
-    {"name": TEABLE_FIELD_NAMES["weather_pressure"], "type": "number", "options": {"format": "decimal", "precision": 2}},
+    {
+        "name": TEABLE_FIELD_NAMES["weather_humidity"],
+        "type": "number",
+        "options": {"format": "decimal", "precision": 2},
+    },
+    {
+        "name": TEABLE_FIELD_NAMES["weather_pressure"],
+        "type": "number",
+        "options": {"format": "decimal", "precision": 2},
+    },
     {"name": TEABLE_FIELD_NAMES["device_name"], "type": "singleLineText"},
-    {"name": TEABLE_FIELD_NAMES["step_count"], "type": "number", "options": {"format": "integer"}},
+    {
+        "name": TEABLE_FIELD_NAMES["step_count"],
+        "type": "number",
+        "options": {"format": "integer"},
+    },
     {"name": TEABLE_FIELD_NAMES["media_attachments"], "type": "attachment"},
     {"name": TEABLE_FIELD_NAMES["source_app_name"], "type": "singleLineText"},
     {"name": TEABLE_FIELD_NAMES["source_original_id"], "type": "singleLineText"},
-    {"name": TEABLE_FIELD_NAMES["source_imported_at"], "type": "date", "options": {"dateFormat": "YYYY-MM-DD HH:mm:ss"}},
+    {
+        "name": TEABLE_FIELD_NAMES["source_imported_at"],
+        "type": "date",
+        "options": {"dateFormat": "YYYY-MM-DD HH:mm:ss"},
+    },
     {"name": TEABLE_FIELD_NAMES["source_raw_data"], "type": "longText"},
 ]
 
@@ -108,8 +157,8 @@ ATTACHMENT_LINK_FIELD_DEFINITION = {
     "name": ATTACHMENT_LINK_FIELD_NAME,
     "type": "link",
     "options": {
-        "foreignTableId": "", # This will be filled in dynamically
+        "foreignTableId": "",  # This will be filled in dynamically
         "relationship": "many-to-one",
-        "foreignTableName": JOURNAL_TABLE_NAME
-    }
+        "foreignTableName": JOURNAL_TABLE_NAME,
+    },
 }
