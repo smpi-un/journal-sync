@@ -20,10 +20,19 @@ from journal_core.models import JournalEntry
 
 class NocoDBJournalClient(AbstractJournalClient):
     def __init__(self):
-        self.nocodb_url = NOCODB_URL
-        self.api_base_url = urljoin(NOCODB_URL, "api/v2/")
-        self.api_token = NOCODB_API_TOKEN
-        self.project_id = NOCODB_PROJECT_ID
+        nocodb_url = os.getenv("NOCODB_URL", "http://localhost:8080")
+        nocodb_api_token = os.getenv("NOCODB_API_TOKEN")
+        nocodb_project_id = os.getenv("NOCODB_PROJECT_ID")
+
+        if not nocodb_api_token:
+            raise ValueError("NOCODB_API_TOKEN is not set in the environment or .env file.")
+        if not nocodb_project_id:
+            raise ValueError("NOCODB_PROJECT_ID is not set in the environment or .env file.")
+
+        self.nocodb_url = nocodb_url
+        self.api_base_url = urljoin(nocodb_url, "api/v2/")
+        self.api_token = nocodb_api_token
+        self.project_id = nocodb_project_id
         self.headers = {"xc-token": self.api_token}
         self.journal_table_id = None
         self.journal_table_uuid = None

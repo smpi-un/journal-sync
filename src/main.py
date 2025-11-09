@@ -2,6 +2,9 @@ import argparse
 import glob
 import os
 
+from dotenv import load_dotenv # Added this line
+
+from clients.grist_client import GristJournalClient
 from clients.nocodb_client import NocoDBJournalClient
 from clients.teable_client import TeableJournalClient
 from data_sources.journey_cloud_source import JourneyCloudDataSource
@@ -67,9 +70,11 @@ def main(source_data_path: str, client_type: str = "teable"):
         journal_client = TeableJournalClient()
     elif client_type == "nocodb":
         journal_client = NocoDBJournalClient()
+    elif client_type == "grist":
+        journal_client = GristJournalClient()
     else:
         raise ValueError(
-            f"Unknown client type: {client_type}. Choose 'teable' or 'nocodb'."
+            f"Unknown client type: {client_type}. Choose 'teable', 'nocodb', or 'grist'."
         )
 
     # 3. Initialize and run Journal Manager
@@ -83,8 +88,9 @@ def main(source_data_path: str, client_type: str = "teable"):
 
 
 if __name__ == "__main__":
+    load_dotenv() # Added this line
     parser = argparse.ArgumentParser(
-        description="Import journal entries from Journey.Cloud export directories into a specified client (Teable or NocoDB)."
+        description="Import journal entries from Journey.Cloud export directories into a specified client (Teable, NocoDB, or Grist)."
     )
 
     parser.add_argument(
@@ -98,7 +104,7 @@ if __name__ == "__main__":
         "--client",
         type=str,
         default="teable",
-        choices=["teable", "nocodb"],
+        choices=["teable", "nocodb", "grist"],
         help="The client to which the journal entries will be imported. Defaults to 'teable'.",
     )
 

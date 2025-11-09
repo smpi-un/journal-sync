@@ -45,6 +45,7 @@ class JournalManager:
         for entry in entries:
             if entry.id and entry.id in existing_entries_data:
                 existing_modified_at = existing_entries_data[entry.id]
+                print(existing_modified_at)
                 # Only update if the incoming entry is newer
                 if (
                     entry.modified_at
@@ -60,6 +61,7 @@ class JournalManager:
             else:
                 entries_to_register.append(entry)
 
+        print(len(entries_to_register))
         registered_results = []
         if entries_to_register:
             print(

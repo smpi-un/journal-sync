@@ -1,23 +1,9 @@
 import os
 
-from dotenv import load_dotenv
-
-# Load environment variables from .env file
-load_dotenv()
-
 # NocoDB connection details
-NOCODB_URL = os.getenv("NOCODB_URL", "http://localhost:8080")
-NOCODB_API_TOKEN = os.getenv("NOCODB_API_TOKEN")
-NOCODB_PROJECT_ID = os.getenv(
-    "NOCODB_PROJECT_ID"
-)  # In NocoDB this is often the project name or ID
-
-# Validate that required environment variables are set
-if not NOCODB_API_TOKEN:
-    raise ValueError("NOCODB_API_TOKEN is not set in the environment or .env file.")
-if not NOCODB_PROJECT_ID:
-    raise ValueError("NOCODB_PROJECT_ID is not set in the environment or .env file.")
-
+NOCODB_URL = "http://localhost:8080" # Default value, will be overridden by env var if set
+NOCODB_API_TOKEN = None
+NOCODB_PROJECT_ID = None
 
 NOCODB_JOURNAL_TABLE_NAME = "JournalEntries"
 NOCODB_ATTACHMENT_TABLE_NAME = "Attachments"

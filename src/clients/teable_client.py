@@ -22,13 +22,22 @@ class TeableJournalClient(AbstractJournalClient):
     """A wrapper class for the Teable API, using requests directly."""
 
     def __init__(self):
+        teable_api_url = os.getenv("TEABLE_API_URL", "https://app.teable.ai")
+        teable_api_token = os.getenv("TEABLE_API_TOKEN")
+        teable_base_id = os.getenv("TEABLE_BASE_ID")
+
+        if not teable_api_token:
+            raise ValueError("TEABLE_API_TOKEN is not set in the environment or .env file.")
+        if not teable_base_id:
+            raise ValueError("TEABLE_BASE_ID is not set in the environment or .env file.")
+
         # Ensure the base URL ends with a slash for proper joining
-        self.base_url = urljoin(TEABLE_API_URL, "api/")
+        self.base_url = urljoin(teable_api_url, "api/")
         self.headers = {
-            "Authorization": f"Bearer {TEABLE_API_TOKEN}",
+            "Authorization": f"Bearer {teable_api_token}",
             "Content-Type": "application/json",
         }
-        self.base_id = TEABLE_BASE_ID
+        self.base_id = teable_base_id
         self.journal_table_id = None
         self.attachment_table_id = None
         self.attachment_field_id = None

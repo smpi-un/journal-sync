@@ -158,11 +158,13 @@ if __name__ == "__main__":
     parser.add_argument(
         "output_dir",
         type=str,
+        nargs="?",  # 0 or 1の引数を受け取る
         help="解凍先のベースディレクトリパス。この直下に各ZIPファイル名のフォルダが作成されます。",
     )
 
     # 引数を解析
     args = parser.parse_args()
+
 
     print("--- 解凍ツールの実行 ---")
 
@@ -191,7 +193,11 @@ if __name__ == "__main__":
         # 出力サブディレクトリ名を決定 (例: /path/to/output/archive)
         zip_filename = os.path.basename(zip_file_path)
         sub_dir_name = os.path.splitext(zip_filename)[0]
-        specific_output_dir = os.path.join(args.output_dir, sub_dir_name)
+        if args.output_dir:
+            output_dir = args.output_dir
+        else:
+            output_dir = os.path.dirname(zip_file_path)
+        specific_output_dir = os.path.join(output_dir, sub_dir_name)
 
         # メイン処理を実行
         unzip_and_update_json(zip_file_path, specific_output_dir)

@@ -1,20 +1,9 @@
 import os
 
-from dotenv import load_dotenv
-
-# Load environment variables from .env file
-load_dotenv()
-
 # --- Teable API Configuration ---
-TEABLE_API_URL = os.getenv("TEABLE_API_URL", "https://app.teable.ai")
-TEABLE_API_TOKEN = os.getenv("TEABLE_API_TOKEN")
-TEABLE_BASE_ID = os.getenv("TEABLE_BASE_ID")
-
-# Validate that required environment variables are set
-if not TEABLE_API_TOKEN:
-    raise ValueError("TEABLE_API_TOKEN is not set in the environment or .env file.")
-if not TEABLE_BASE_ID:
-    raise ValueError("TEABLE_BASE_ID is not set in the environment or .env file.")
+TEABLE_API_URL = "https://app.teable.ai" # Default value, will be overridden by env var if set
+TEABLE_API_TOKEN = None
+TEABLE_BASE_ID = None
 
 # --- Table and Field Naming ---
 JOURNAL_TABLE_NAME = "JourneyEntries"
