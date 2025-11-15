@@ -58,6 +58,9 @@ from journal_core.manager import JournalManager
 def main(source_data_path: str, client_type: str = "teable"):
     """Main function to import and register journal entries using abstractions."""
 
+    from dotenv import dotenv_values
+
+    config = dotenv_values()
     # 1. Initialize Data Source
     # For JourneyCloud, the data_path could be the extracted directory or the zip itself
     # For simplicity, let's assume JourneyCloudDataSource can handle the zip or a directory
@@ -67,11 +70,20 @@ def main(source_data_path: str, client_type: str = "teable"):
     # 2. Initialize Journal Client
     journal_client = None
     if client_type == "teable":
-        journal_client = TeableJournalClient()
+        token = config.get("TEABLE_API_TOKEN")
+        base_id = config.get("TEABLE_BASE_ID")
+        url = config.get("TEABLE_API_URL", "https://app.teable.ai")
+        journal_client = TeableJournalClient(token, base_id, url)
     elif client_type == "nocodb":
-        journal_client = NocoDBJournalClient()
+        url = config.get("NOCODB_URL")
+        api_token = config.get("NOCODB_API_TOKEN")
+        project_id = config.get("NOCODB_PROJECT_ID")
+        journal_client = NocoDBJournalClient(api_token, project_id, url)
     elif client_type == "grist":
-        journal_client = GristJournalClient()
+        api_url = config.get("GRIST_API_URL")
+        api_key = config.get("GRIST_API_KEY")
+        doc_id = config.get("GRIST_DOC_ID")
+        journal_client = GristJournalClient(api_url, api_key, doc_id)
     else:
         raise ValueError(
             f"Unknown client type: {client_type}. Choose 'teable', 'nocodb', or 'grist'."
@@ -136,7 +148,9 @@ if __name__ == "__main__":
             main(source_path, client_type=args.client)
         except FileNotFoundError as e:
             print(f"Error processing {source_path}: {e}")
+            raise
         except Exception as e:
             print(f"An unexpected error occurred while processing {source_path}: {e}")
+            raise
 
     print("\nAll processing complete.")

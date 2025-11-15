@@ -1,6 +1,6 @@
 from datetime import UTC, datetime
 
-from journal_core.models import JournalEntry
+from src.journal_core.models import JournalEntry
 
 
 def test_to_journey_cloud_dict_full():

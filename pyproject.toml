@@ -40,3 +40,8 @@ ignore_missing_imports = true
 show_error_codes = true
 # Pretty-print error messages
 pretty = true
+
+[tool.pytest.ini_options]
+pythonpath = [
+  "src"
+]

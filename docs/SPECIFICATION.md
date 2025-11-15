@@ -5,11 +5,11 @@ The primary goal of this project is to import diary data exported from Journey.C
 
 Currently supported and targeted backends include:
 -   **Teable**
--   **NocoDB**
--   **Grist** (under active development)
+-   **NocoDB** (under active development due to v3 API issues)
+-   **Grist**
 
 ## Current State (as of latest update)
-A Python script (`src/main.py`) exists that attempts to import data. It supports Teable and NocoDB clients. Initial integration for Grist has been attempted but is currently not fully functional and requires further development.
+A Python script (`src/main.py`) exists that successfully imports data into Teable and Grist. The NocoDB client is currently experiencing issues with its v3 API integration and requires further development.
 
 ## Desired Features & Specifications
 
@@ -32,24 +32,24 @@ A Python script (`src/main.py`) exists that attempts to import data. It supports
 
 ### 4. Automatic Table & Column Creation
 -   The script should automatically create the necessary tables (e.g., "JourneyEntries" and "Attachments") if they do not already exist in the chosen backend.
--   It should also ensure that all required columns for these tables are present, adding them if they are missing. This includes correctly setting up link columns.
+-   It should also ensure that all required columns for these tables are present, adding them if they are missing. This includes correctly setting up link columns and the `CalendarEntryAt` column for calendar views.
 
 ### 5. Client-Specific Implementations
 
 #### Teable Client
--   **Status:** Largely functional.
+-   **Status:** Fully functional. Supports upload, download, and calendar-specific date columns.
 -   **Table Naming:** "JourneyEntries" for journal entries, "Attachments" for media.
 -   **Field Mapping:** Defined in `clients/teable_client_config.py`.
 -   **API Interaction:** Uses Teable's REST API.
 
 #### NocoDB Client
--   **Status:** Largely functional, with some known issues (see `NOCODB_CODE_ANALYSIS.md`).
+-   **Status:** Under development due to v3 API issues.
 -   **Table Naming:** "JournalEntries" for journal entries, "Attachments" for media.
 -   **Field Mapping:** Defined in `clients/nocodb_client_config.py`.
--   **API Interaction:** Uses NocoDB's REST API (mix of v1 and v2 endpoints).
+-   **API Interaction:** Uses NocoDB's REST API (v3 endpoints).
 
 #### Grist Client
--   **Status:** Under development. Initial implementation has been reverted due to API understanding issues.
--   **Table Naming:** Intended to use "JournalEntries".
--   **Field Mapping:** Intended to be defined in `clients/grist_client_config.py`.
--   **API Interaction:** Intended to use Grist's REST API. Requires further investigation into table identification and data population mechanisms.
+-   **Status:** Fully functional. Supports upload, download, and calendar-specific date columns.
+-   **Table Naming:** "JournalEntries" for journal entries.
+-   **Field Mapping:** Defined in `clients/grist_client_config.py`.
+-   **API Interaction:** Uses Grist's REST API.

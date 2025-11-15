@@ -1,4 +1,3 @@
-
 import os
 
 # --- Grist API Configuration ---
@@ -8,74 +7,41 @@ GRIST_DOC_ID = None
 
 # --- Table and Field Naming ---
 JOURNAL_TABLE_NAME = "JournalEntries"
-ATTACHMENT_TABLE_NAME = "Attachments" # Not directly used for Grist attachments in this implementation
+ATTACHMENT_TABLE_NAME = "Attachments"
 
-# This dictionary maps the JournalEntry model fields to the Grist table field names.
-GRIST_FIELD_NAMES = {
-    "id": "JournalId", # Reverted to "Id"
-    "entry_at": "EntryAt",
-    "timezone": "Timezone",
-    "created_at": "CreatedAt",
-    "modified_at": "ModifiedAt",
-    "text_content": "TextContent",
-    "rich_text_content": "RichTextContent",
-    "title": "Title",
-    "tags": "Tags",
-    "notebook": "Notebook",
-    "is_favorite": "IsFavorite",
-    "is_pinned": "IsPinned",
-    "mood_label": "Mood",
-    "mood_score": "MoodScore",
-    "activities": "Activities",
-    "location_lat": "LocationLat",
-    "location_lon": "LocationLon",
-    "location_name": "LocationName",
-    "location_address": "LocationAddress",
-    "location_altitude": "LocationAltitude",
-    "weather_temperature": "WeatherTemp",
-    "weather_condition": "WeatherCondition",
-    "weather_humidity": "WeatherHumidity",
-    "weather_pressure": "WeatherPressure",
-    "device_name": "DeviceName",
-    "step_count": "StepCount",
-    "media_attachments": "MediaAttachments", # Storing as JSON string or URLs
-    "source_app_name": "SourceAppName",
-    "source_original_id": "SourceOriginalId",
-    "source_imported_at": "SourceImportedAt",
-    "source_raw_data": "SourceRawData",
-}
-
-# Define the columns for the "JournalEntries" table in Grist
+# Define the columns for the "JournalEntries" table in Grist.
+# The 'id' of each column should correspond to the PascalCase version of the JournalEntry fields.
 GRIST_JOURNAL_TABLE_COLUMNS = [
-    {"id": GRIST_FIELD_NAMES["id"], "fields": {"label": GRIST_FIELD_NAMES["id"]}}, # "Text" # Primary key in Grist is usually 'id' or a custom column
-    {"id": GRIST_FIELD_NAMES["entry_at"], "fields": {"label": GRIST_FIELD_NAMES["entry_at"]}}, # "type": "DateTime"},
-    {"id": GRIST_FIELD_NAMES["timezone"], "fields": {"label": GRIST_FIELD_NAMES["timezone"]}}, # "type": "Text"},
-    {"id": GRIST_FIELD_NAMES["created_at"], "fields": {"label": GRIST_FIELD_NAMES["created_at"]}}, # "type": "DateTime"},
-    {"id": GRIST_FIELD_NAMES["modified_at"], "fields": {"label": GRIST_FIELD_NAMES["modified_at"]}}, # "type": "DateTime"},
-    {"id": GRIST_FIELD_NAMES["text_content"], "fields": {"label": GRIST_FIELD_NAMES["text_content"]}}, # "type": "Text"},
-    {"id": GRIST_FIELD_NAMES["rich_text_content"], "fields": {"label": GRIST_FIELD_NAMES["rich_text_content"]}}, # "type": "Text"},
-    {"id": GRIST_FIELD_NAMES["title"], "fields": {"label": GRIST_FIELD_NAMES["title"]}}, # "type": "Text"},
-    {"id": GRIST_FIELD_NAMES["tags"], "fields": {"label": GRIST_FIELD_NAMES["tags"]}}, # "type": "Text"},
-    {"id": GRIST_FIELD_NAMES["notebook"], "fields": {"label": GRIST_FIELD_NAMES["notebook"]}}, # "type": "Text"},
-    {"id": GRIST_FIELD_NAMES["is_favorite"], "fields": {"label": GRIST_FIELD_NAMES["is_favorite"]}}, # "type": "Bool"},
-    {"id": GRIST_FIELD_NAMES["is_pinned"], "fields": {"label": GRIST_FIELD_NAMES["is_pinned"]}}, # "type": "Bool"},
-    {"id": GRIST_FIELD_NAMES["mood_label"], "fields": {"label": GRIST_FIELD_NAMES["mood_label"]}}, # "type": "Text"},
-    {"id": GRIST_FIELD_NAMES["mood_score"], "fields": {"label": GRIST_FIELD_NAMES["mood_score"]}}, # "type": "Numeric"},
-    {"id": GRIST_FIELD_NAMES["activities"], "fields": {"label": GRIST_FIELD_NAMES["activities"]}}, # "type": "Text"},
-    {"id": GRIST_FIELD_NAMES["location_lat"], "fields": {"label": GRIST_FIELD_NAMES["location_lat"]}}, # "type": "Numeric"},
-    {"id": GRIST_FIELD_NAMES["location_lon"], "fields": {"label": GRIST_FIELD_NAMES["location_lon"]}}, # "type": "Numeric"},
-    {"id": GRIST_FIELD_NAMES["location_name"], "fields": {"label": GRIST_FIELD_NAMES["location_name"]}}, # "type": "Text"},
-    {"id": GRIST_FIELD_NAMES["location_address"], "fields": {"label": GRIST_FIELD_NAMES["location_address"]}}, # "type": "Text"},
-    {"id": GRIST_FIELD_NAMES["location_altitude"], "fields": {"label": GRIST_FIELD_NAMES["location_altitude"]}}, # "type": "Numeric"},
-    {"id": GRIST_FIELD_NAMES["weather_temperature"], "fields": {"label": GRIST_FIELD_NAMES["weather_temperature"]}}, # "type": "Numeric"},
-    {"id": GRIST_FIELD_NAMES["weather_condition"], "fields": {"label": GRIST_FIELD_NAMES["weather_condition"]}}, # "type": "Text"},
-    {"id": GRIST_FIELD_NAMES["weather_humidity"], "fields": {"label": GRIST_FIELD_NAMES["weather_humidity"]}}, # "type": "Numeric"},
-    {"id": GRIST_FIELD_NAMES["weather_pressure"], "fields": {"label": GRIST_FIELD_NAMES["weather_pressure"]}}, # "type": "Numeric"},
-    {"id": GRIST_FIELD_NAMES["device_name"], "fields": {"label": GRIST_FIELD_NAMES["device_name"]}}, # "type": "Text"},
-    {"id": GRIST_FIELD_NAMES["step_count"], "fields": {"label": GRIST_FIELD_NAMES["step_count"]}}, # "type": "Numeric"},
-    {"id": GRIST_FIELD_NAMES["media_attachments"], "fields": {"label": GRIST_FIELD_NAMES["media_attachments"]}}, # "type": "Text"}, # Storing as JSON string or URLs
-    {"id": GRIST_FIELD_NAMES["source_app_name"], "fields": {"label": GRIST_FIELD_NAMES["source_app_name"]}}, # "type": "Text"},
-    {"id": GRIST_FIELD_NAMES["source_original_id"], "fields": {"label": GRIST_FIELD_NAMES["source_original_id"]}}, # "type": "Text"},
-    {"id": GRIST_FIELD_NAMES["source_imported_at"], "fields": {"label": GRIST_FIELD_NAMES["source_imported_at"]}}, # "type": "DateTime"},
-    {"id": GRIST_FIELD_NAMES["source_raw_data"], "fields": {"label": GRIST_FIELD_NAMES["source_raw_data"]}}, # "type": "Text"},
+    {"id": "JournalId", "fields": {"label": "JournalId"}},
+    {"id": "EntryAt", "fields": {"label": "EntryAt", "type": "Text"}},
+    {"id": "CalendarEntryAt", "fields": {"label": "CalendarEntryAt", "type": "DateTime"}},
+    {"id": "Timezone", "fields": {"label": "Timezone"}},
+    {"id": "CreatedAt", "fields": {"label": "CreatedAt", "type": "Text"}},
+    {"id": "ModifiedAt", "fields": {"label": "ModifiedAt", "type": "Text"}},
+    {"id": "TextContent", "fields": {"label": "TextContent"}},
+    {"id": "RichTextContent", "fields": {"label": "RichTextContent"}},
+    {"id": "Title", "fields": {"label": "Title"}},
+    {"id": "Tags", "fields": {"label": "Tags"}},
+    {"id": "Notebook", "fields": {"label": "Notebook"}},
+    {"id": "IsFavorite", "fields": {"label": "IsFavorite"}},
+    {"id": "IsPinned", "fields": {"label": "IsPinned"}},
+    {"id": "Mood", "fields": {"label": "Mood"}},
+    {"id": "MoodScore", "fields": {"label": "MoodScore"}},
+    {"id": "Activities", "fields": {"label": "Activities"}},
+    {"id": "LocationLat", "fields": {"label": "LocationLat"}},
+    {"id": "LocationLon", "fields": {"label": "LocationLon"}},
+    {"id": "LocationName", "fields": {"label": "LocationName"}},
+    {"id": "LocationAddress", "fields": {"label": "LocationAddress"}},
+    {"id": "LocationAltitude", "fields": {"label": "LocationAltitude"}},
+    {"id": "WeatherTemp", "fields": {"label": "WeatherTemp"}},
+    {"id": "WeatherCondition", "fields": {"label": "WeatherCondition"}},
+    {"id": "WeatherHumidity", "fields": {"label": "WeatherHumidity"}},
+    {"id": "WeatherPressure", "fields": {"label": "WeatherPressure"}},
+    {"id": "DeviceName", "fields": {"label": "DeviceName"}},
+    {"id": "StepCount", "fields": {"label": "StepCount"}},
+    {"id": "MediaAttachments", "fields": {"label": "MediaAttachments"}},
+    {"id": "SourceAppName", "fields": {"label": "SourceAppName"}},
+    {"id": "SourceOriginalId", "fields": {"label": "SourceOriginalId"}},
+    {"id": "SourceImportedAt", "fields": {"label": "SourceImportedAt", "type": "Text"}},
+    {"id": "SourceRawData", "fields": {"label": "SourceRawData"}},
 ]

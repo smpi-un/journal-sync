@@ -1,11 +1,13 @@
 # Journal Teable/NocoDB/Grist Importer
 
-This project provides a Python script to import journal entries exported from Journey.Cloud into various backend services like Teable, NocoDB, and (with ongoing development) Grist.
+This project provides a Python script to import journal entries exported from Journey.Cloud into various backend services like Teable, NocoDB, and Grist.
 
 ## Features
 
--   **Multi-Backend Support:** Currently supports Teable and NocoDB. Grist integration is under development.
+-   **Multi-Backend Support:** Supports Teable, NocoDB, and Grist.
 -   **Journey.Cloud Data Import:** Processes ZIP archives exported from Journey.Cloud, extracting journal entries and their associated media.
+-   **Download and Display Data:** Allows downloading and displaying journal entries from configured backends.
+-   **Calendar-Specific Date Columns:** Adds dedicated date columns for calendar views in backends.
 -   **Conditional Updates:** Prevents re-importing older entries by comparing modification timestamps.
 -   **Automatic Table/Column Creation:** Automatically sets up necessary tables and columns in the target backend if they don't exist.
 -   **Attachment Handling:** Imports media attachments and links them to their respective journal entries.
@@ -14,7 +16,7 @@ This project provides a Python script to import journal entries exported from Jo
 
 -   **Teable:** A collaborative database.
 -   **NocoDB:** An open-source Airtable alternative.
--   **Grist:** (Under Development) A modern relational spreadsheet.
+-   **Grist:** A modern relational spreadsheet.
 
 ## Setup
 
@@ -50,7 +52,7 @@ This project provides a Python script to import journal entries exported from Jo
     NOCODB_API_TOKEN="YOUR_NOCODB_API_TOKEN"
     NOCODB_PROJECT_ID="YOUR_NOCODB_PROJECT_ID"
 
-    # Grist API Configuration (currently under development)
+    # Grist API Configuration
     GRIST_API_URL="https://your-grist-instance.grist.us"
     GRIST_API_KEY="YOUR_GRIST_API_KEY"
     GRIST_DOC_ID="YOUR_GRIST_DOC_ID"
@@ -61,25 +63,24 @@ This project provides a Python script to import journal entries exported from Jo
 Run the script with the path to your Journey.Cloud export ZIP file(s) and specify the target client.
 
 ```bash
-python src/main.py "path/to/your/journey_export.zip" --client teable
+uv run python src/main.py "path/to/your/journey_export.zip" --client teable
 ```
 
 You can specify multiple paths or use wildcards:
 
 ```bash
-python src/main.py "path/to/exports/*.zip" --client nocodb
+uv run python src/main.py "path/to/exports/*.zip" --client nocodb
 ```
 
 ### Available Clients
 
 -   `teable`: Imports data into Teable.
 -   `nocodb`: Imports data into NocoDB.
--   `grist`: (Under Development) Intended to import data into Grist.
+-   `grist`: Imports data into Grist.
 
 ## Development Status
 
--   **Teable & NocoDB:** Functionality for importing journal entries and attachments is largely implemented.
--   **Grist:** Initial integration has been attempted but is currently reverted due to API understanding issues. Further development is required to correctly handle table identification and data population.
+-   **Teable, NocoDB & Grist:** Functionality for importing journal entries, handling attachments, downloading data, and adding calendar-specific date columns is implemented.
 
 ## Contributing
 

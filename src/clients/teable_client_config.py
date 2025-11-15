@@ -9,135 +9,52 @@ TEABLE_BASE_ID = None
 JOURNAL_TABLE_NAME = "JourneyEntries"
 ATTACHMENT_TABLE_NAME = "Attachments"
 
-# This dictionary maps the JournalEntry model fields to the Teable table field names.
-# This provides a single point of configuration if the field names in Teable change.
-TEABLE_FIELD_NAMES = {
-    "id": "Id",
-    "entry_at": "EntryAt",
-    "timezone": "Timezone",
-    "created_at": "CreatedAt",
-    "modified_at": "ModifiedAt",
-    "text_content": "TextContent",
-    "rich_text_content": "RichTextContent",
-    "title": "Title",
-    "tags": "Tags",
-    "notebook": "Notebook",
-    "is_favorite": "IsFavorite",
-    "is_pinned": "IsPinned",
-    "mood_label": "Mood",
-    "mood_score": "MoodScore",
-    "activities": "Activities",
-    "location_lat": "LocationLat",
-    "location_lon": "LocationLon",
-    "location_name": "LocationName",
-    "location_address": "LocationAddress",
-    "location_altitude": "LocationAltitude",
-    "weather_temperature": "WeatherTemp",
-    "weather_condition": "WeatherCondition",
-    "weather_humidity": "WeatherHumidity",
-    "weather_pressure": "WeatherPressure",
-    "device_name": "DeviceName",
-    "step_count": "StepCount",
-    "media_attachments": "Attachments",
-    "source_app_name": "SourceAppName",
-    "source_original_id": "SourceOriginalId",
-    "source_imported_at": "SourceImportedAt",
-    "source_raw_data": "SourceRawData",
-}
-
 # --- Table Schema Definitions ---
 
 # Define the columns for the "JournalEntries" table
 # This is used when the client verifies or creates the table.
 JOURNAL_TABLE_COLUMNS = [
-    {"name": TEABLE_FIELD_NAMES["id"], "type": "singleLineText", "isPrimary": True},
-    {
-        "name": TEABLE_FIELD_NAMES["entry_at"],
-        "type": "date",
-        "options": {"dateFormat": "YYYY-MM-DD HH:mm:ss"},
-    },
-    {"name": TEABLE_FIELD_NAMES["timezone"], "type": "singleLineText"},
-    {
-        "name": TEABLE_FIELD_NAMES["created_at"],
-        "type": "date",
-        "options": {"dateFormat": "YYYY-MM-DD HH:mm:ss"},
-    },
-    {
-        "name": TEABLE_FIELD_NAMES["modified_at"],
-        "type": "date",
-        "options": {"dateFormat": "YYYY-MM-DD HH:mm:ss"},
-    },
-    {"name": TEABLE_FIELD_NAMES["text_content"], "type": "longText"},
-    {"name": TEABLE_FIELD_NAMES["rich_text_content"], "type": "longText"},
-    {"name": TEABLE_FIELD_NAMES["title"], "type": "singleLineText"},
-    {"name": TEABLE_FIELD_NAMES["tags"], "type": "singleLineText"},
-    {"name": TEABLE_FIELD_NAMES["notebook"], "type": "singleLineText"},
-    {"name": TEABLE_FIELD_NAMES["is_favorite"], "type": "checkbox"},
-    {"name": TEABLE_FIELD_NAMES["is_pinned"], "type": "checkbox"},
-    {"name": TEABLE_FIELD_NAMES["mood_label"], "type": "singleLineText"},
-    {
-        "name": TEABLE_FIELD_NAMES["mood_score"],
-        "type": "number",
-        "options": {"format": "decimal", "precision": 1},
-    },
-    {"name": TEABLE_FIELD_NAMES["activities"], "type": "singleLineText"},
-    {
-        "name": TEABLE_FIELD_NAMES["location_lat"],
-        "type": "number",
-        "options": {"format": "decimal", "precision": 8},
-    },
-    {
-        "name": TEABLE_FIELD_NAMES["location_lon"],
-        "type": "number",
-        "options": {"format": "decimal", "precision": 8},
-    },
-    {"name": TEABLE_FIELD_NAMES["location_name"], "type": "singleLineText"},
-    {"name": TEABLE_FIELD_NAMES["location_address"], "type": "longText"},
-    {
-        "name": TEABLE_FIELD_NAMES["location_altitude"],
-        "type": "number",
-        "options": {"format": "decimal", "precision": 2},
-    },
-    {
-        "name": TEABLE_FIELD_NAMES["weather_temperature"],
-        "type": "number",
-        "options": {"format": "decimal", "precision": 1},
-    },
-    {"name": TEABLE_FIELD_NAMES["weather_condition"], "type": "singleLineText"},
-    {
-        "name": TEABLE_FIELD_NAMES["weather_humidity"],
-        "type": "number",
-        "options": {"format": "decimal", "precision": 2},
-    },
-    {
-        "name": TEABLE_FIELD_NAMES["weather_pressure"],
-        "type": "number",
-        "options": {"format": "decimal", "precision": 2},
-    },
-    {"name": TEABLE_FIELD_NAMES["device_name"], "type": "singleLineText"},
-    {
-        "name": TEABLE_FIELD_NAMES["step_count"],
-        "type": "number",
-        "options": {"format": "integer"},
-    },
-    {"name": TEABLE_FIELD_NAMES["media_attachments"], "type": "attachment"},
-    {"name": TEABLE_FIELD_NAMES["source_app_name"], "type": "singleLineText"},
-    {"name": TEABLE_FIELD_NAMES["source_original_id"], "type": "singleLineText"},
-    {
-        "name": TEABLE_FIELD_NAMES["source_imported_at"],
-        "type": "date",
-        "options": {"dateFormat": "YYYY-MM-DD HH:mm:ss"},
-    },
-    {"name": TEABLE_FIELD_NAMES["source_raw_data"], "type": "longText"},
+    {"name": "Id", "type": "singleLineText"},
+    {"name": "EntryAt", "type": "singleLineText"}, # Changed from date to text
+    {"name": "CalendarEntryAt", "type": "date"}, # Added for calendar view
+    {"name": "Timezone", "type": "singleLineText"},
+    {"name": "CreatedAt", "type": "singleLineText"}, # Changed from date to text
+    {"name": "ModifiedAt", "type": "singleLineText"}, # Changed from date to text
+    {"name": "TextContent", "type": "longText"},
+    {"name": "RichTextContent", "type": "longText"},
+    {"name": "Title", "type": "singleLineText"},
+    {"name": "Tags", "type": "singleLineText"},
+    {"name": "Notebook", "type": "singleLineText"},
+    {"name": "IsFavorite", "type": "checkbox"},
+    {"name": "IsPinned", "type": "checkbox"},
+    {"name": "Mood", "type": "singleLineText"},
+    {"name": "MoodScore", "type": "number"},
+    {"name": "Activities", "type": "singleLineText"},
+    {"name": "LocationLat", "type": "number"},
+    {"name": "LocationLon", "type": "number"},
+    {"name": "LocationName", "type": "singleLineText"},
+    {"name": "LocationAddress", "type": "longText"},
+    {"name": "LocationAltitude", "type": "number"},
+    {"name": "WeatherTemp", "type": "number"},
+    {"name": "WeatherCondition", "type": "singleLineText"},
+    {"name": "WeatherHumidity", "type": "number"},
+    {"name": "WeatherPressure", "type": "number"},
+    {"name": "DeviceName", "type": "singleLineText"},
+    {"name": "StepCount", "type": "number"},
+    {"name": "Attachments", "type": "attachment"},
+    {"name": "SourceAppName", "type": "singleLineText"},
+    {"name": "SourceOriginalId", "type": "singleLineText"},
+    {"name": "SourceImportedAt", "type": "singleLineText"}, # Changed from date to text
+    {"name": "SourceRawData", "type": "longText"},
 ]
 
 # Define the columns for the "Attachments" table
 ATTACHMENT_TABLE_COLUMNS = [
-    {"name": "Id", "type": "singleLineText", "isPrimary": True},
+    {"name": "Id", "type": "singleLineText"},
     {"name": "Filename", "type": "singleLineText"},
     {"name": "URL", "type": "singleLineText"},
     {"name": "MIMEType", "type": "singleLineText"},
-    {"name": "Size", "type": "number", "options": {"format": "integer"}},
+    {"name": "Size", "type": "number"},
 ]
 
 # Define the link field to connect Attachments back to JournalEntries
