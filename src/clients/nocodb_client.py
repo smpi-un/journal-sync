@@ -18,7 +18,7 @@ from journal_core.converters import journal_to_journey
 
 # Mapping from JournalEntry snake_case attributes to NocoDB Column Titles
 SNAKE_TO_TITLE_MAP = {
-    'id': 'Id', 'entry_at': 'EntryAt', 'created_at': 'JournalCreatedAt', 
+    'id': 'JournalId', 'entry_at': 'EntryAt', 'created_at': 'JournalCreatedAt', 
     'modified_at': 'JournalModifiedAt', 'mood_label': 'Mood', 
     'media_attachments': 'MediaAttachments', 'text_content': 'TextContent',
     'rich_text_content': 'RichTextContent', 'is_favorite': 'IsFavorite', 
@@ -194,7 +194,7 @@ class NocoDBJournalClient(AbstractJournalClient):
                     raise ValueError("'entry_at' field is missing or invalid.")
                 parsed_entries.append(entry)
             except Exception as e:
-                record_id_str = rec.get("Id", f"at index {i}")
+                record_id_str = rec.get("JournalId", f"at index {i}")
                 print(f"Warning: Skipping record '{record_id_str}' due to a conversion error: {e}")
         return parsed_entries
 
@@ -214,7 +214,10 @@ class NocoDBJournalClient(AbstractJournalClient):
             path = f"data/{self.project_id}/{self.journal_table_id}/records"
             try:
                 response = self._make_request("POST", path, json=records_payload)
-                all_registered_records.extend(response)
+                if isinstance(response, list):
+                    all_registered_records.extend(response)
+                else:
+                    all_registered_records.append(response)
             except requests.exceptions.RequestException as e:
                 print(f"Error registering records in chunk {i // chunk_size + 1}: {e}")
                 if e.response:
@@ -232,13 +235,13 @@ class NocoDBJournalClient(AbstractJournalClient):
 
     def get_existing_entry_ids(self) -> List[str]:
         records = self.get_all_records()
-        return [str(rec.get("Id")) for rec in records if rec.get("Id")]
+        return [str(rec.get("JournalId")) for rec in records if rec.get("JournalId")]
 
     def get_existing_entries_with_modified_at(self) -> Dict[str, datetime]:
         records = self.get_all_records()
         existing_data = {}
         for rec in records:
-            record_id = rec.get("Id")
+            record_id = rec.get("JournalId")
             modified_at_str = rec.get("JournalModifiedAt")
             if record_id and modified_at_str:
                 try:
@@ -281,77 +284,6 @@ if __name__ == "__main__":
 
     except (ValueError, requests.exceptions.RequestException) as e:
         print(f"An error occurred during the test: {e}")
-
-    def create_table(self, table_name: str, columns_definition: List[Dict]) -> Dict[str, Any]:
-        path = f"meta/bases/{self.project_id}/tables"
-        payload = {"title": table_name, "fields": columns_definition}
-        print(f"Sending request to create table '{table_name}'...")
-        return self._make_request("POST", path, json=payload)
-
-    def download_journal_entries(self) -> List[JournalEntry]:
-        print("Downloading and parsing journal entries from NocoDB...")
-        records = self.get_all_records()
-        
-        parsed_entries = []
-        for i, rec in enumerate(records):
-            try:
-                entry = _nocodb_record_to_journal_entry(rec) # Pass raw record
-                if not entry.entry_at:
-                    raise ValueError("'entry_at' field is missing or invalid.")
-                parsed_entries.append(entry)
-            except Exception as e:
-                record_id_str = rec.get("Id", f"at index {i}")
-                print(f"Warning: Skipping record '{record_id_str}' due to a conversion error: {e}")
-        return parsed_entries
-
-    def get_all_records(self) -> List[Dict]:
-        path = f"data/{self.project_id}/{self.journal_table_id}/records"
-        return self._make_request("GET", path).get("list", [])
-
-    def register_entry(self, entry: JournalEntry) -> Any:
-        return self.register_entries([entry])
-
-    def register_entries(self, entries: List[JournalEntry]) -> List[Any]:
-        all_registered_records = []
-        chunk_size = 10
-        for i in range(0, len(entries), chunk_size):
-            chunk = entries[i:i + chunk_size]
-            records_payload = [{"fields": _journal_entry_to_nocodb_fields(entry)} for entry in chunk]
-            path = f"data/{self.project_id}/{self.journal_table_id}/records"
-            try:
-                response = self._make_request("POST", path, json=records_payload)
-                all_registered_records.extend(response)
-            except requests.exceptions.RequestException as e:
-                print(f"Error registering records in chunk {i // chunk_size + 1}: {e}")
-                if e.response:
-                    print(f"Response Body: {e.response.text}")
-                raise e
-        return all_registered_records
-
-    def update_entry(self, entry: JournalEntry) -> Any:
-        return self.update_entries([entry])
-
-    def update_entries(self, entries: List[JournalEntry]) -> List[Any]:
-        records_payload = [{"fields": _journal_entry_to_nocodb_fields(entry)} for entry in entries]
-        path = f"data/{self.project_id}/{self.journal_table_id}/records"
-        return self._make_request("PATCH", path, json=records_payload)
-
-    def get_existing_entry_ids(self) -> List[str]:
-        records = self.get_all_records()
-        return [str(rec.get("Id")) for rec in records if rec.get("Id")]
-
-    def get_existing_entries_with_modified_at(self) -> Dict[str, datetime]:
-        records = self.get_all_records()
-        existing_data = {}
-        for rec in records:
-            record_id = rec.get("Id")
-            modified_at_str = rec.get("JournalModifiedAt")
-            if record_id and modified_at_str:
-                try:
-                    existing_data[str(record_id)] = datetime.fromisoformat(modified_at_str)
-                except (ValueError, TypeError):
-                    print(f"Warning: Could not parse JournalModifiedAt for entry {record_id}: {modified_at_str}")
-        return existing_data
 
 if __name__ == "__main__":
     from dotenv import dotenv_values

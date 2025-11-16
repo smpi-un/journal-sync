@@ -10,7 +10,7 @@ NOCODB_JOURNAL_TABLE_NAME = "JournalEntries"
 # NocoDB v3 API Column Definitions for Table Creation
 # Uses 'title' and 'type' as per the v3 documentation.
 NOCODB_JOURNAL_TABLE_COLUMNS = [
-    {"title": "Id", "type": "SingleLineText"},
+    {"title": "JournalId", "type": "SingleLineText"},
     {"title": "EntryAt", "type": "SingleLineText"},
     {"title": "CalendarEntryAt", "type": "SingleLineText"},
     {"title": "Timezone", "type": "SingleLineText"},
