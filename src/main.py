@@ -2,13 +2,14 @@ import argparse
 import glob
 import os
 
-from dotenv import load_dotenv # Added this line
+from dotenv import load_dotenv  # Added this line
 
 from clients.grist_client import GristJournalClient
 from clients.nocodb_client import NocoDBJournalClient
 from clients.teable_client import TeableJournalClient
 from data_sources.journey_cloud_source import JourneyCloudDataSource
 from journal_core.manager import JournalManager
+from journal_core.interfaces import AbstractJournalClient, AbstractJournalDataSource
 
 # Configuration for Teable (moved to teable_client_config.py)
 # from teable_config (
@@ -68,21 +69,27 @@ def main(source_data_path: str, client_type: str = "teable"):
     data_source = JourneyCloudDataSource(data_path=source_data_path)
 
     # 2. Initialize Journal Client
-    journal_client = None
+    journal_client: AbstractJournalClient = None
     if client_type == "teable":
-        token = config.get("TEABLE_API_TOKEN")
+        api_token = config.get("TEABLE_API_TOKEN")
         base_id = config.get("TEABLE_BASE_ID")
-        url = config.get("TEABLE_API_URL", "https://app.teable.ai")
-        journal_client = TeableJournalClient(token, base_id, url)
+        api_url = config.get("TEABLE_API_URL", "https://app.teable.ai")
+        if api_url is None or api_token is None or base_id is None:
+            raise Exception("")
+        journal_client = TeableJournalClient(api_token, base_id, api_url)
     elif client_type == "nocodb":
-        url = config.get("NOCODB_URL")
+        api_url = config.get("NOCODB_URL")
         api_token = config.get("NOCODB_API_TOKEN")
         project_id = config.get("NOCODB_PROJECT_ID")
-        journal_client = NocoDBJournalClient(api_token, project_id, url)
+        if api_url is None or api_token is None or project_id is None:
+            raise Exception("")
+        journal_client = NocoDBJournalClient(api_token, project_id, api_url)
     elif client_type == "grist":
         api_url = config.get("GRIST_API_URL")
         api_key = config.get("GRIST_API_KEY")
         doc_id = config.get("GRIST_DOC_ID")
+        if api_url is None or api_key is None or doc_id is None:
+            raise Exception("")
         journal_client = GristJournalClient(api_url, api_key, doc_id)
     else:
         raise ValueError(
@@ -100,7 +107,7 @@ def main(source_data_path: str, client_type: str = "teable"):
 
 
 if __name__ == "__main__":
-    load_dotenv() # Added this line
+    load_dotenv()  # Added this line
     parser = argparse.ArgumentParser(
         description="Import journal entries from Journey.Cloud export directories into a specified client (Teable, NocoDB, or Grist)."
     )

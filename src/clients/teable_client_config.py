@@ -1,7 +1,9 @@
 import os
 
 # --- Teable API Configuration ---
-TEABLE_API_URL = "https://app.teable.ai" # Default value, will be overridden by env var if set
+TEABLE_API_URL = (
+    "https://app.teable.ai"  # Default value, will be overridden by env var if set
+)
 TEABLE_API_TOKEN = None
 TEABLE_BASE_ID = None
 
@@ -15,11 +17,11 @@ ATTACHMENT_TABLE_NAME = "Attachments"
 # This is used when the client verifies or creates the table.
 JOURNAL_TABLE_COLUMNS = [
     {"name": "Id", "type": "singleLineText"},
-    {"name": "EntryAt", "type": "singleLineText"}, # Changed from date to text
-    {"name": "CalendarEntryAt", "type": "date"}, # Added for calendar view
+    {"name": "EntryAt", "type": "singleLineText"},  # Changed from date to text
+    {"name": "CalendarEntryAt", "type": "date"},  # Added for calendar view
     {"name": "Timezone", "type": "singleLineText"},
-    {"name": "CreatedAt", "type": "singleLineText"}, # Changed from date to text
-    {"name": "ModifiedAt", "type": "singleLineText"}, # Changed from date to text
+    {"name": "CreatedAt", "type": "singleLineText"},  # Changed from date to text
+    {"name": "ModifiedAt", "type": "singleLineText"},  # Changed from date to text
     {"name": "TextContent", "type": "longText"},
     {"name": "RichTextContent", "type": "longText"},
     {"name": "Title", "type": "singleLineText"},
@@ -44,7 +46,7 @@ JOURNAL_TABLE_COLUMNS = [
     {"name": "Attachments", "type": "attachment"},
     {"name": "SourceAppName", "type": "singleLineText"},
     {"name": "SourceOriginalId", "type": "singleLineText"},
-    {"name": "SourceImportedAt", "type": "singleLineText"}, # Changed from date to text
+    {"name": "SourceImportedAt", "type": "singleLineText"},  # Changed from date to text
     {"name": "SourceRawData", "type": "longText"},
 ]
 

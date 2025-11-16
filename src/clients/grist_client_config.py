@@ -14,7 +14,10 @@ ATTACHMENT_TABLE_NAME = "Attachments"
 GRIST_JOURNAL_TABLE_COLUMNS = [
     {"id": "JournalId", "fields": {"label": "JournalId"}},
     {"id": "EntryAt", "fields": {"label": "EntryAt", "type": "Text"}},
-    {"id": "CalendarEntryAt", "fields": {"label": "CalendarEntryAt", "type": "DateTime"}},
+    {
+        "id": "CalendarEntryAt",
+        "fields": {"label": "CalendarEntryAt", "type": "DateTime"},
+    },
     {"id": "Timezone", "fields": {"label": "Timezone"}},
     {"id": "CreatedAt", "fields": {"label": "CreatedAt", "type": "Text"}},
     {"id": "ModifiedAt", "fields": {"label": "ModifiedAt", "type": "Text"}},

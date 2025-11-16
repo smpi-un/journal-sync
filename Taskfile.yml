@@ -1,0 +1,34 @@
+# Taskfile.yml
+version: '3'
+
+tasks:
+  test:
+    desc: "pytestでテストを実行します"
+    cmds:
+      - uv run pytest
+
+  test2:
+    desc: "Ruffでlintチェックを実行します"
+    cmds:
+      - echo "hello from lint"
+
+  format:
+    desc: "Ruffでフォーマットを実行します"
+    cmds:
+      - uv run ruff format .
+
+  typecheck:
+    desc: "mypyで型チェックを実行します"
+    cmds:
+      - uv run mypy
+
+  check:
+    desc: "全てのチェック（lint, typecheck, test）を実行します"
+    cmds:
+      - task: lint
+      - task: typecheck
+      - task: test
+  
+  default:
+    cmds:
+      - task: check

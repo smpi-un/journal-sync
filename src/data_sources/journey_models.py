@@ -2,12 +2,14 @@ from dataclasses import dataclass, field
 from typing import Any, Optional, List
 import json
 
+
 @dataclass
 class JourneyLocation:
     lat: Optional[float] = None
     lng: Optional[float] = None
     name: Optional[str] = None
     altitude: Optional[float] = None
+
 
 @dataclass
 class JourneyWeather:
@@ -17,6 +19,7 @@ class JourneyWeather:
     icon: Optional[str] = None
     place: Optional[str] = None
 
+
 @dataclass
 class JourneyCloudEntry:
     id: str
@@ -24,7 +27,7 @@ class JourneyCloudEntry:
     text: str
     timezone: str
     updatedAt: str
-    
+
     # Optional fields with defaults
     favourite: bool = False
     sentiment: float = 0.0
@@ -78,7 +81,7 @@ class JourneyCloudEntry:
         """Serializes the JourneyCloudEntry object back to a dictionary."""
         # Use a helper to convert dataclasses to dicts, then clean up
         from dataclasses import asdict
-        
+
         data = asdict(self)
         # Filter out None values for cleaner JSON, mimicking original format
         return {k: v for k, v in data.items() if v is not None}

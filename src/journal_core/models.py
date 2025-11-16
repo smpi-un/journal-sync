@@ -140,3 +140,7 @@ class JournalEntry:
 
         # Remove keys with None values for a cleaner output, similar to original JSON
         return {k: v for k, v in journey_dict.items() if v is not None}
+
+
+class JournalAttachment:
+    pass

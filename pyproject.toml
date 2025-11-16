@@ -15,11 +15,13 @@ dev = [
     "pytest>=8.2.2",
     "ruff>=0.14.4",
     "mypy>=1.18.2",
+    "go-task-bin>=3.45.5", # The Task binary provider
 ]
 
 [tool.ruff]
 line-length = 88
-src = ["src", "utils", "tests"]
+# 対象ディレクトリをincludeで明示
+include = ["src", "utils", "tests"]
 
 [tool.ruff.lint]
 select = [
@@ -32,16 +34,23 @@ select = [
     "UP", # pyupgrade
 ]
 
+# formatセクションを追加
+[tool.ruff.format]
+include = ["src", "utils", "tests"]
+
+
 [tool.mypy]
 python_version = "3.12"
+# チェック対象をfilesで明示
+files = ["src", "utils", "tests"]
+# mypy_pathは、srcとutils内のインポート解決に役立つため残します
 mypy_path = "src:utils"
 ignore_missing_imports = true
-# Show error codes so we can decide to ignore them locally if needed
 show_error_codes = true
-# Pretty-print error messages
 pretty = true
+explicit_package_bases = true
 
 [tool.pytest.ini_options]
 pythonpath = [
-  "src"
+  ".", "src"
 ]
