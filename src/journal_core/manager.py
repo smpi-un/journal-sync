@@ -31,12 +31,8 @@ class JournalManager:
             print("No new entries to process.")
             return []
 
-        print(
-            f"Checking for existing entries in {type(self.journal_client).__name__}..."
-        )
-        existing_entries_data = (
-            self.journal_client.get_existing_entries_with_modified_at()
-        )
+        print(f"Checking for existing entries in {type(self.journal_client).__name__}...")
+        existing_entries_data = self.journal_client.get_existing_entries_with_modified_at()
         print(f"Found {len(existing_entries_data)} existing entries.")
 
         entries_to_register = []
@@ -47,17 +43,11 @@ class JournalManager:
                 existing_modified_at = existing_entries_data[entry.id]
                 print(existing_modified_at)
                 # Only update if the incoming entry is newer
-                if (
-                    entry.modified_at
-                    and existing_modified_at
-                    and entry.modified_at > existing_modified_at
-                ):
+                if entry.modified_at and existing_modified_at and entry.modified_at > existing_modified_at:
                     print(f"Updating entry with ID: {entry.id} (newer modified_at)")
                     entries_to_update.append(entry)
                 else:
-                    print(
-                        f"Skipping entry with ID: {entry.id} (already exists and not newer)"
-                    )
+                    print(f"Skipping entry with ID: {entry.id} (already exists and not newer)")
             else:
                 entries_to_register.append(entry)
 
@@ -65,7 +55,8 @@ class JournalManager:
         registered_results = []
         if entries_to_register:
             print(
-                f"Registering {len(entries_to_register)} new entries with journal client: {type(self.journal_client).__name__}"
+                f"Registering {len(entries_to_register)} new entries with journal client: "
+                f"{type(self.journal_client).__name__}"
             )
             newly_registered = self.journal_client.register_entries(entries_to_register)
             if newly_registered:
@@ -77,7 +68,8 @@ class JournalManager:
         updated_results = []
         if entries_to_update:
             print(
-                f"Updating {len(entries_to_update)} existing entries with journal client: {type(self.journal_client).__name__}"
+                f"Updating {len(entries_to_update)} existing entries with journal client: "
+                f"{type(self.journal_client).__name__}"
             )
             newly_updated = self.journal_client.update_entries(entries_to_update)
             if newly_updated:

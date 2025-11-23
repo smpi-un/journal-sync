@@ -1,5 +1,3 @@
-import os
-
 # --- Grist API Configuration ---
 GRIST_API_URL = None
 GRIST_API_KEY = None

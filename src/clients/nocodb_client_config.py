@@ -1,5 +1,3 @@
-import os
-
 # NocoDB connection details
 NOCODB_URL = "http://localhost:8080"
 NOCODB_API_TOKEN = None

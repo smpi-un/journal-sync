@@ -1,18 +1,17 @@
 import json
-import mimetypes
-import os
 from datetime import datetime
-from typing import Any, List, Dict, Optional
+from typing import Any
 from urllib.parse import urljoin
 
+import requests
 
 from clients.teable_client_config import (
-    JOURNAL_TABLE_NAME,
     JOURNAL_TABLE_COLUMNS,
+    JOURNAL_TABLE_NAME,
 )
+from journal_core.converters import journal_to_journey
 from journal_core.interfaces import AbstractJournalClient
 from journal_core.models import JournalEntry
-from journal_core.converters import journal_to_journey
 
 # --- Conversion Functions ---
 
@@ -72,9 +71,7 @@ def _journal_entry_to_teable_fields(entry: JournalEntry) -> dict[str, Any]:
 
     if entry.source_raw_data:
         raw_data_str = (
-            entry.source_raw_data
-            if isinstance(entry.source_raw_data, str)
-            else json.dumps(entry.source_raw_data)
+            entry.source_raw_data if isinstance(entry.source_raw_data, str) else json.dumps(entry.source_raw_data)
         )
         add_field("SourceRawData", raw_data_str)
 
@@ -99,17 +96,14 @@ def _teable_record_to_journal_entry(record: dict) -> JournalEntry:
                 return None
         return val
 
-    def to_datetime(val: str) -> Optional[datetime]:
+    def to_datetime(val: str) -> datetime | None:
         return datetime.fromisoformat(val.replace("Z", "+00:00"))
 
-    def to_str_list(val: str) -> List[str]:
+    def to_str_list(val: str) -> list[str]:
         return [s.strip() for s in val.split(",")] if val else []
 
-    def to_attachment_list(val: List[dict]) -> List[dict]:
-        return [
-            {"type": "file", "filename": att.get("name"), "url": att.get("url")}
-            for att in val
-        ]
+    def to_attachment_list(val: list[dict]) -> list[dict]:
+        return [{"type": "file", "filename": att.get("name"), "url": att.get("url")} for att in val]
 
     entry_data["id"] = get_val("Id")
     entry_data["entry_at"] = get_val("EntryAt", to_datetime)
@@ -151,9 +145,7 @@ def _teable_record_to_journal_entry(record: dict) -> JournalEntry:
 class TeableJournalClient(AbstractJournalClient):
     """A wrapper class for the Teable API, using requests directly."""
 
-    def __init__(
-        self, api_token: str, base_id: str, api_url: str = "https://app.teable.ai"
-    ):
+    def __init__(self, api_token: str, base_id: str, api_url: str = "https://app.teable.ai"):
         if not api_token or not base_id:
             raise ValueError("API token and base ID must be provided.")
 
@@ -172,9 +164,7 @@ class TeableJournalClient(AbstractJournalClient):
                 raise ValueError(f"Failed to create table '{JOURNAL_TABLE_NAME}'.")
         self.journal_table_id = table_id
 
-    def create_table(
-        self, table_name: str, fields: List[Dict[str, Any]]
-    ) -> Optional[str]:
+    def create_table(self, table_name: str, fields: list[dict[str, Any]]) -> str | None:
         """Creates a new table in the Teable base and returns its ID."""
         path = f"/base/{self.base_id}/table"
         print(fields)
@@ -187,7 +177,7 @@ class TeableJournalClient(AbstractJournalClient):
             raise
             return None
 
-    def _get_table_id_by_name(self, table_name: str) -> Optional[str]:
+    def _get_table_id_by_name(self, table_name: str) -> str | None:
         """Finds a table by its name and returns its ID."""
         print(f"Fetching ID for table '{table_name}'...")
         tables = self._make_request("GET", f"/base/{self.base_id}/table")
@@ -203,7 +193,7 @@ class TeableJournalClient(AbstractJournalClient):
         response.raise_for_status()
         return response.json()
 
-    def download_journal_entries(self) -> List[JournalEntry]:
+    def download_journal_entries(self) -> list[JournalEntry]:
         """Downloads all journal entries and parses them into JournalEntry objects."""
         print("Downloading and parsing journal entries from Teable...")
         path = f"/table/{self.journal_table_id}/record"
@@ -220,19 +210,15 @@ class TeableJournalClient(AbstractJournalClient):
                     parsed_entries.append(entry)
                 except Exception as e:
                     record_id_str = rec.get("fields", {}).get("Id", f"at index {i}")
-                    print(
-                        f"Warning: Skipping record '{record_id_str}' due to a conversion error: {e}"
-                    )
+                    print(f"Warning: Skipping record '{record_id_str}' due to a conversion error: {e}")
 
         return parsed_entries
 
     def register_entry(self, entry: JournalEntry) -> Any:
         return self.register_entries([entry])
 
-    def register_entries(self, entries: List[JournalEntry]) -> List[Any]:
-        records_to_create = [
-            {"fields": _journal_entry_to_teable_fields(entry)} for entry in entries
-        ]
+    def register_entries(self, entries: list[JournalEntry]) -> list[Any]:
+        records_to_create = [{"fields": _journal_entry_to_teable_fields(entry)} for entry in entries]
         path = f"/table/{self.journal_table_id}/record"
         response = self._make_request("POST", path, json={"records": records_to_create})
         return response.get("records", [])
@@ -240,15 +226,11 @@ class TeableJournalClient(AbstractJournalClient):
     def update_entry(self, entry: JournalEntry) -> Any:
         return self.update_entries([entry])
 
-    def update_entries(self, entries: List[JournalEntry]) -> List[Any]:
+    def update_entries(self, entries: list[JournalEntry]) -> list[Any]:
         print("Warning: Batch update in Teable is performed individually.")
         updated_records = []
         for entry in entries:
-            records = self.get_all_records(
-                query={
-                    "where": json.dumps({"field": "Id", "op": "is", "value": entry.id})
-                }
-            )
+            records = self.get_all_records(query={"where": json.dumps({"field": "Id", "op": "is", "value": entry.id})})
             if not records:
                 print(f"Warning: Could not find record with Id '{entry.id}' to update.")
                 continue
@@ -259,7 +241,7 @@ class TeableJournalClient(AbstractJournalClient):
             updated_records.append(self._make_request("PATCH", path, json=payload))
         return updated_records
 
-    def get_all_records(self, query: Optional[Dict] = None) -> List[Dict]:
+    def get_all_records(self, query: dict | None = None) -> list[dict]:
         """Gets all records, with an optional query."""
         params = query or {}
         path = f"/table/{self.journal_table_id}/record"
@@ -267,15 +249,11 @@ class TeableJournalClient(AbstractJournalClient):
         response = self._make_request("GET", path, params=params)
         return response.get("records", [])
 
-    def get_existing_entry_ids(self) -> List[str]:
+    def get_existing_entry_ids(self) -> list[str]:
         all_records = self.get_all_records()
-        return [
-            str(record["fields"]["Id"])
-            for record in all_records
-            if "Id" in record.get("fields", {})
-        ]
+        return [str(record["fields"]["Id"]) for record in all_records if "Id" in record.get("fields", {})]
 
-    def get_existing_entries_with_modified_at(self) -> Dict[str, datetime]:
+    def get_existing_entries_with_modified_at(self) -> dict[str, datetime]:
         all_records = self.get_all_records()
         existing_data = {}
         for record in all_records:
@@ -284,20 +262,15 @@ class TeableJournalClient(AbstractJournalClient):
             modified_at_str = fields.get("ModifiedAt")
             if record_id and modified_at_str:
                 try:
-                    existing_data[str(record_id)] = datetime.fromisoformat(
-                        modified_at_str
-                    )
+                    existing_data[str(record_id)] = datetime.fromisoformat(modified_at_str)
                 except (ValueError, TypeError):
-                    print(
-                        f"Warning: Could not parse ModifiedAt for entry {record_id}: {modified_at_str}"
-                    )
+                    print(f"Warning: Could not parse ModifiedAt for entry {record_id}: {modified_at_str}")
                     raise
         return existing_data
 
 
 if __name__ == "__main__":
     from dotenv import dotenv_values
-    import os
 
     print("Running TeableJournalClient test...")
 
@@ -307,13 +280,9 @@ if __name__ == "__main__":
     base_id = config.get("TEABLE_BASE_ID")
     url = config.get("TEABLE_API_URL", "https://app.teable.ai")
 
-    if not token or not base_id:
-        print(
-            "Error: Could not read TEABLE_API_TOKEN and TEABLE_BASE_ID from your .env file."
-        )
-        print(
-            "Please ensure the .env file exists in the root directory and the variables are set correctly."
-        )
+    if not token or not base_id or not url:
+        print("Error: Could not read TEABLE_API_TOKEN, TEABLE_BASE_ID, and TEABLE_API_URL from your .env file.")
+        print("Please ensure the .env file exists in the root directory and the variables are set correctly.")
         exit(1)
 
     try:
@@ -325,9 +294,7 @@ if __name__ == "__main__":
         if not journal_entries:
             print("No entries to process.")
         else:
-            journey_cloud_entries = [
-                journal_to_journey(entry) for entry in journal_entries
-            ]
+            journey_cloud_entries = [journal_to_journey(entry) for entry in journal_entries]
             journey_cloud_dicts = [entry.to_dict() for entry in journey_cloud_entries]
 
             print("\n--- Journey Cloud Formatted JSON (from Teable) ---")

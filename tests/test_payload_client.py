@@ -1,13 +1,16 @@
-
 import unittest
-from unittest.mock import patch, MagicMock
-from datetime import datetime, timezone
+from datetime import UTC, datetime
+from unittest.mock import MagicMock, patch
 
+from clients.payload_client import (
+    PayloadCmsJournalClient,
+    _journal_entry_to_payload_cms_entry,
+    _payload_doc_to_journal_entry,
+)
 from journal_core.models import JournalEntry
-from clients.payload_client import PayloadCmsJournalClient, _journal_entry_to_payload_cms_entry, _payload_doc_to_journal_entry
+
 
 class TestPayloadClient(unittest.TestCase):
-
     def test_round_trip_conversion(self):
         """
         Tests that a JournalEntry can be converted to a Payload doc
@@ -16,26 +19,26 @@ class TestPayloadClient(unittest.TestCase):
         # 1. Create a complex JournalEntry
         original_entry = JournalEntry(
             id="test-id-123",
-            entry_at=datetime(2025, 1, 1, 12, 0, 0, tzinfo=timezone.utc),
+            entry_at=datetime(2025, 1, 1, 12, 0, 0, tzinfo=UTC),
             title="My Test Entry",
             text_content="<p>This is a test.</p>",
-            rich_text_content=None, # Let's assume it's HTML from Journey
+            rich_text_content=None,  # Let's assume it's HTML from Journey
             tags=["testing", "python"],
             is_favorite=True,
             mood_score=0.8,
             location_name="Test Location",
             weather_condition="Sunny",
             source_app_name="TestApp",
-            source_raw_data={"key": "value"}
+            source_raw_data={"key": "value"},
         )
 
         # 2. Convert to Payload format (as a dictionary)
         payload_entry_obj = _journal_entry_to_payload_cms_entry(original_entry)
-        
+
         # This step is done inside the client, but we replicate it here
         # to simulate the data that would be sent to and returned from the API.
         payload_doc = {
-            "id": "payload-generated-id-abc", # Payload would generate its own ID
+            "id": "payload-generated-id-abc",  # Payload would generate its own ID
             "entryAt": payload_entry_obj.entryAt.isoformat(),
             "title": payload_entry_obj.title,
             "textContent": payload_entry_obj.textContent,
@@ -48,12 +51,12 @@ class TestPayloadClient(unittest.TestCase):
             "source": {
                 "appName": payload_entry_obj.source.appName,
                 "originalId": payload_entry_obj.source.originalId,
-                "rawData": payload_entry_obj.source.rawData
+                "rawData": payload_entry_obj.source.rawData,
             },
             "createdAt": "2025-01-01T12:00:00Z",
             "updatedAt": "2025-01-01T12:00:00Z",
         }
-        
+
         # 3. Convert back to JournalEntry
         reconverted_entry = _payload_doc_to_journal_entry(payload_doc)
 
@@ -73,8 +76,7 @@ class TestPayloadClient(unittest.TestCase):
         # A simple equality check works for this flat dict.
         self.assertEqual(original_entry.source_raw_data, reconverted_entry.source_raw_data)
 
-
-    @patch('clients.payload_client.requests.request')
+    @patch("clients.payload_client.requests.request")
     def test_download_journal_entries(self, mock_request):
         """
         Tests the download_journal_entries method to ensure it correctly
@@ -89,19 +91,15 @@ class TestPayloadClient(unittest.TestCase):
                     "entryAt": "2025-01-01T12:00:00.000Z",
                     "title": "First Entry",
                     "textContent": "Hello World",
-                    "source": {
-                        "originalId": "test-id-1"
-                    }
+                    "source": {"originalId": "test-id-1"},
                 },
                 {
                     "id": "payload-id-2",
                     "entryAt": "2025-01-02T15:30:00.000Z",
                     "title": "Second Entry",
                     "textContent": "Another post",
-                    "source": {
-                        "originalId": "test-id-2"
-                    }
-                }
+                    "source": {"originalId": "test-id-2"},
+                },
             ],
             "totalDocs": 2,
         }
@@ -115,16 +113,17 @@ class TestPayloadClient(unittest.TestCase):
 
         # 3. Assert the results
         self.assertEqual(len(downloaded_entries), 2)
-        
+
         # Check first entry
         self.assertEqual(downloaded_entries[0].id, "test-id-1")
         self.assertEqual(downloaded_entries[0].title, "First Entry")
-        self.assertEqual(downloaded_entries[0].entry_at, datetime(2025, 1, 1, 12, 0, tzinfo=timezone.utc))
-        
+        self.assertEqual(downloaded_entries[0].entry_at, datetime(2025, 1, 1, 12, 0, tzinfo=UTC))
+
         # Check second entry
         self.assertEqual(downloaded_entries[1].id, "test-id-2")
         self.assertEqual(downloaded_entries[1].title, "Second Entry")
-        self.assertEqual(downloaded_entries[1].entry_at, datetime(2025, 1, 2, 15, 30, tzinfo=timezone.utc))
+        self.assertEqual(downloaded_entries[1].entry_at, datetime(2025, 1, 2, 15, 30, tzinfo=UTC))
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     unittest.main()

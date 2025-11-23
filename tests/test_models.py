@@ -61,10 +61,7 @@ def test_to_journey_cloud_dict_full():
     assert location["longitude"] == 139.767125
     assert location["name"] == "Tokyo Station"
     assert location["altitude"] == 3.0
-    assert (
-        journey_dict["address"]
-        == "1 Chome-9 Marunouchi, Chiyoda City, Tokyo 100-0005, Japan"
-    )
+    assert journey_dict["address"] == "1 Chome-9 Marunouchi, Chiyoda City, Tokyo 100-0005, Japan"
 
     # Weather
     assert "weather" in journey_dict
@@ -84,9 +81,7 @@ def test_to_journey_cloud_dict_minimal():
     Tests the conversion of a minimal JournalEntry object.
     """
     entry_time = datetime(2023, 10, 28, 15, 0, 0, tzinfo=UTC)
-    entry = JournalEntry(
-        id="minimal-id", entry_at=entry_time, text_content="Just a simple note."
-    )
+    entry = JournalEntry(id="minimal-id", entry_at=entry_time, text_content="Just a simple note.")
 
     journey_dict = entry.to_journey_cloud_dict()
 
@@ -98,9 +93,7 @@ def test_to_journey_cloud_dict_minimal():
     assert journey_dict["activity"] == 0
     assert "location" not in journey_dict
     assert "weather" not in journey_dict
-    assert (
-        "tags" in journey_dict and journey_dict["tags"] == []
-    )  # Should be present and empty
+    assert "tags" in journey_dict and journey_dict["tags"] == []  # Should be present and empty
     assert "attachments" not in journey_dict
     assert "updatedAt" not in journey_dict  # Since modified_at was None
 

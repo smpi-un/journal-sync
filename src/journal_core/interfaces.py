@@ -2,14 +2,7 @@ from abc import ABC, abstractmethod
 from datetime import datetime
 from typing import Any
 
-
-class JournalEntry:
-    """
-    Abstract representation of a journal entry.
-    Concrete implementations will define specific fields.
-    """
-
-    pass
+from .models import JournalEntry
 
 
 class AbstractJournalClient(ABC):

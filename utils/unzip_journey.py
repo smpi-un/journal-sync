@@ -110,25 +110,17 @@ def unzip_and_update_json(zip_file_path, output_dir):
                             # indent=2 で見やすくフォーマット
                             json.dump(json_data, f, ensure_ascii=False, indent=2)
 
-                        print(
-                            f"  更新完了: {data['json_file']} (添付 {len(data['attachments'])} 件)"
-                        )
+                        print(f"  更新完了: {data['json_file']} (添付 {len(data['attachments'])} 件)")
                         updated_count += 1
 
                     except json.JSONDecodeError:
-                        print(
-                            f"  エラー: JSONの読み込みに失敗しました: {json_full_path}"
-                        )
+                        print(f"  エラー: JSONの読み込みに失敗しました: {json_full_path}")
                     except OSError as e:
-                        print(
-                            f"  エラー: ファイルの読み書きに失敗しました: {json_full_path} ({e})"
-                        )
+                        print(f"  エラー: ファイルの読み書きに失敗しました: {json_full_path} ({e})")
                     except Exception as e:
                         print(f"  予期せぬエラー: {json_full_path} ({e})")
                 else:
-                    print(
-                        f"  警告: フォルダ '{folder_name}' にjsonファイルが見つかりませんでした。"
-                    )
+                    print(f"  警告: フォルダ '{folder_name}' にjsonファイルが見つかりませんでした。")
 
             print(f"処理完了。{updated_count} 件のJSONファイルを更新しました。")
 
@@ -174,9 +166,7 @@ if __name__ == "__main__":
         # パターンにワイルドカードが含まれていなくても、単一要素のリストとして正しく機能する
         found_files = glob.glob(path_pattern, recursive=True)
         if not found_files:
-            print(
-                f"警告: パターン '{path_pattern}' に一致するファイルが見つかりませんでした。"
-            )
+            print(f"警告: パターン '{path_pattern}' に一致するファイルが見つかりませんでした。")
         all_files.extend(found_files)
 
     if not all_files:

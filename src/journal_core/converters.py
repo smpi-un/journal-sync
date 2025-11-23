@@ -1,6 +1,5 @@
-from datetime import datetime
 import json
-from typing import Any
+from datetime import datetime
 
 from data_sources.journey_models import (
     JourneyCloudEntry,
@@ -10,9 +9,7 @@ from data_sources.journey_models import (
 from journal_core.models import JournalEntry
 
 
-def journey_to_journal(
-    journey_entry: JourneyCloudEntry, raw_data: dict
-) -> JournalEntry:
+def journey_to_journal(journey_entry: JourneyCloudEntry, raw_data: dict) -> JournalEntry:
     """Converts a JourneyCloudEntry object to the application's internal JournalEntry object."""
 
     def parse_dt(dt_str: str | None) -> datetime | None:
@@ -27,21 +24,21 @@ def journey_to_journal(
     location_lat = journey_entry.location.lat if journey_entry.location else None
     location_lon = journey_entry.location.lng if journey_entry.location else None
     location_name = journey_entry.location.name if journey_entry.location else None
-    location_altitude = (
-        journey_entry.location.altitude if journey_entry.location else None
-    )
+    location_altitude = journey_entry.location.altitude if journey_entry.location else None
 
     weather_temp = journey_entry.weather.degreeC if journey_entry.weather else None
     weather_cond = journey_entry.weather.description if journey_entry.weather else None
 
     # Create a simplified representation for media attachments
-    media_attachments = [
-        {"type": "file", "filename": fname} for fname in journey_entry.attachments
-    ]
+    media_attachments = [{"type": "file", "filename": fname} for fname in journey_entry.attachments]
+
+    entry_at_dt = parse_dt(journey_entry.dateOfJournal)
+    if entry_at_dt is None:
+        raise ValueError("JournalEntry requires 'entry_at' to be a valid datetime.")
 
     return JournalEntry(
         id=journey_entry.id,
-        entry_at=parse_dt(journey_entry.dateOfJournal),
+        entry_at=entry_at_dt,
         created_at=parse_dt(journey_entry.createdAt or journey_entry.dateOfJournal),
         modified_at=parse_dt(journey_entry.updatedAt),
         timezone=journey_entry.timezone,
@@ -78,10 +75,7 @@ def journal_to_journey(journal_entry: JournalEntry) -> JourneyCloudEntry:
 
     # Manual conversion (fallback or if raw_data is not available)
     location = None
-    if (
-        journal_entry.location_lat is not None
-        and journal_entry.location_lon is not None
-    ):
+    if journal_entry.location_lat is not None and journal_entry.location_lon is not None:
         location = JourneyLocation(
             lat=journal_entry.location_lat,
             lng=journal_entry.location_lon,
@@ -105,20 +99,16 @@ def journal_to_journey(journal_entry: JournalEntry) -> JourneyCloudEntry:
 
     return JourneyCloudEntry(
         id=journal_entry.id,
-        dateOfJournal=format_dt(journal_entry.entry_at),
-        updatedAt=format_dt(journal_entry.modified_at),
+        dateOfJournal=format_dt(journal_entry.entry_at) or "",
+        updatedAt=format_dt(journal_entry.modified_at) or "",
         createdAt=format_dt(journal_entry.created_at),
         text=journal_entry.text_content or "",
-        timezone=journal_entry.timezone,
+        timezone=journal_entry.timezone or "",
         favourite=journal_entry.is_favorite,
         sentiment=journal_entry.mood_score or 0.0,
         address=journal_entry.location_address,
         location=location,
         weather=weather,
         tags=journal_entry.tags,
-        attachments=[
-            att.get("filename")
-            for att in journal_entry.media_attachments
-            if att.get("filename")
-        ],
+        attachments=[str(att.get("filename")) for att in journal_entry.media_attachments if att.get("filename")],
     )

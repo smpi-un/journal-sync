@@ -19,9 +19,24 @@ dev = [
 ]
 
 [tool.ruff]
-line-length = 88
+# line-length = 88
+line-length = 120
 # 対象ディレクトリをincludeで明示
-include = ["src", "utils", "tests"]
+include = [
+    "src/**/*.py",
+    "utils/**/*.py",
+    "tests/**/*.py"
+]
+
+[tool.ruff.format]
+# シングルクォートを使う（デフォルトはダブル）
+quote-style = "double"
+# インデントスタイル（スペースかタブか）
+indent-style = "space"
+# 行末のカンマの扱い（"dynamic", "no-preference", "trailing"）
+skip-magic-trailing-comma = false
+# docstring内のコード例もフォーマットするか
+docstring-code-format = true
 
 [tool.ruff.lint]
 select = [

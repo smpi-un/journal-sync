@@ -1,10 +1,9 @@
-import json
-from copy import deepcopy
 from dataclasses import asdict
+
 from pytest import approx
 
 from src.data_sources.journey_models import JourneyCloudEntry
-from src.journal_core.converters import journey_to_journal, journal_to_journey
+from src.journal_core.converters import journal_to_journey, journey_to_journal
 
 # A sample record from a previous run to be used as test data.
 # This captures nested objects, lists, and various data types.
@@ -84,12 +83,7 @@ def test_reconstruction_without_raw_data():
 
     # 3. Assert: Check key fields to ensure the manual reconstruction logic works.
     assert original_journey_entry.id == reconstructed_journey_entry.id
-    assert (
-        original_journey_entry.dateOfJournal
-        == reconstructed_journey_entry.dateOfJournal
-    )
+    assert original_journey_entry.dateOfJournal == reconstructed_journey_entry.dateOfJournal
     assert original_journey_entry.text == reconstructed_journey_entry.text
-    assert (
-        original_journey_entry.location.lat == reconstructed_journey_entry.location.lat
-    )
+    assert original_journey_entry.location.lat == reconstructed_journey_entry.location.lat
     assert original_journey_entry.attachments == reconstructed_journey_entry.attachments

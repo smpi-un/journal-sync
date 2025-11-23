@@ -18,9 +18,7 @@ class JourneyCloudDataSource(AbstractJournalDataSource):
             raise FileNotFoundError(f"Data path not found: {data_path}")
         self.data_path = data_path
 
-    def _parse_journey_cloud_entry(
-        self, raw_entry: dict[str, Any], entry_dir_path: str
-    ) -> JournalEntry:
+    def _parse_journey_cloud_entry(self, raw_entry: dict[str, Any], entry_dir_path: str) -> JournalEntry:
         """
         Parses a raw JourneyCloud entry dictionary into the new, comprehensive JournalEntry object.
         """
@@ -36,18 +34,14 @@ class JourneyCloudDataSource(AbstractJournalDataSource):
             return None
 
         # --- 基本識別情報 ---
-        entry_id = raw_entry.get("id")  # Use 'id' from JourneyCloud sample
+        entry_id = raw_entry.get("id", "")  # Use 'id' from JourneyCloud sample
 
         # --- 時間情報 ---
         entry_at = (
-            parse_dt(raw_entry.get("dateOfJournal"))
-            or parse_dt(raw_entry.get("createdAt"))
-            or datetime.now()
+            parse_dt(raw_entry.get("dateOfJournal")) or parse_dt(raw_entry.get("createdAt")) or datetime.now()
         )  # Fallback to now if no date
         timezone = raw_entry.get("timezone")
-        created_at = parse_dt(
-            raw_entry.get("dateOfJournal")
-        )  # Assuming dateOfJournal is creation time
+        created_at = parse_dt(raw_entry.get("dateOfJournal"))  # Assuming dateOfJournal is creation time
         modified_at = parse_dt(raw_entry.get("updatedAt"))
 
         # --- コンテンツ ---
@@ -72,53 +66,35 @@ class JourneyCloudDataSource(AbstractJournalDataSource):
         mood_score = raw_entry.get("sentiment")
         activities = []
         if raw_entry.get("activity") and raw_entry["activity"] != 0:
-            activities = [
-                str(raw_entry["activity"])
-            ]  # Convert activity number to string for list
+            activities = [str(raw_entry["activity"])]  # Convert activity number to string for list
 
         # --- 位置情報 (フラット化) ---
         location_lat = (
-            raw_entry.get("location", {}).get("latitude")
-            if isinstance(raw_entry.get("location"), dict)
-            else None
+            raw_entry.get("location", {}).get("latitude") if isinstance(raw_entry.get("location"), dict) else None
         )
         location_lon = (
-            raw_entry.get("location", {}).get("longitude")
-            if isinstance(raw_entry.get("location"), dict)
-            else None
+            raw_entry.get("location", {}).get("longitude") if isinstance(raw_entry.get("location"), dict) else None
         )
         location_name = (
-            raw_entry.get("location", {}).get("name")
-            if isinstance(raw_entry.get("location"), dict)
-            else None
+            raw_entry.get("location", {}).get("name") if isinstance(raw_entry.get("location"), dict) else None
         )
         location_address = raw_entry.get("address")
         location_altitude = (
-            raw_entry.get("location", {}).get("altitude")
-            if isinstance(raw_entry.get("location"), dict)
-            else None
+            raw_entry.get("location", {}).get("altitude") if isinstance(raw_entry.get("location"), dict) else None
         )
 
         # --- 天気情報 (フラット化) ---
         weather_temperature = (
-            raw_entry.get("weather", {}).get("temperature")
-            if isinstance(raw_entry.get("weather"), dict)
-            else None
+            raw_entry.get("weather", {}).get("temperature") if isinstance(raw_entry.get("weather"), dict) else None
         )
         weather_condition = (
-            raw_entry.get("weather", {}).get("condition")
-            if isinstance(raw_entry.get("weather"), dict)
-            else None
+            raw_entry.get("weather", {}).get("condition") if isinstance(raw_entry.get("weather"), dict) else None
         )
         weather_humidity = (
-            raw_entry.get("weather", {}).get("humidity")
-            if isinstance(raw_entry.get("weather"), dict)
-            else None
+            raw_entry.get("weather", {}).get("humidity") if isinstance(raw_entry.get("weather"), dict) else None
         )
         weather_pressure = (
-            raw_entry.get("weather", {}).get("pressure")
-            if isinstance(raw_entry.get("weather"), dict)
-            else None
+            raw_entry.get("weather", {}).get("pressure") if isinstance(raw_entry.get("weather"), dict) else None
         )
 
         # --- デバイス・その他メタデータ ---
@@ -147,9 +123,7 @@ class JourneyCloudDataSource(AbstractJournalDataSource):
         source_app_name = "JourneyCloud"
         source_original_id = entry_id
         source_imported_at = datetime.now()
-        source_raw_data = (
-            raw_entry  # Store the original raw data for debugging/completeness
-        )
+        source_raw_data = raw_entry  # Store the original raw data for debugging/completeness
 
         return JournalEntry(
             id=entry_id,
@@ -185,17 +159,13 @@ class JourneyCloudDataSource(AbstractJournalDataSource):
             source_raw_data=source_raw_data,
         )
 
-    def _load_journal_entry_from_json(
-        self, entry_dir_path: str, entry_id: str
-    ) -> dict[str, Any] | None:
+    def _load_journal_entry_from_json(self, entry_dir_path: str, entry_id: str) -> dict[str, Any] | None:
         """
         Loads a journal entry from its JSON file within its directory.
         """
         json_file_path = os.path.join(entry_dir_path, f"{entry_id}.json")
         if not os.path.exists(json_file_path):
-            print(
-                f"Warning: JSON file not found for entry {entry_id} at {json_file_path}"
-            )
+            print(f"Warning: JSON file not found for entry {entry_id} at {json_file_path}")
             return None
         try:
             with open(json_file_path, encoding="utf-8") as f:
@@ -216,20 +186,14 @@ class JourneyCloudDataSource(AbstractJournalDataSource):
             if os.path.isdir(full_path):
                 entry_dirs.append(d)
 
-        print(
-            f"Found {len(entry_dirs)} potential journal entry directories in {self.data_path}."
-        )
+        print(f"Found {len(entry_dirs)} potential journal entry directories in {self.data_path}.")
 
         for entry_dir_name in entry_dirs:
             entry_dir_path = os.path.join(self.data_path, entry_dir_name)
-            raw_data = self._load_journal_entry_from_json(
-                entry_dir_path, entry_dir_name
-            )
+            raw_data = self._load_journal_entry_from_json(entry_dir_path, entry_dir_name)
             if raw_data:
                 try:
-                    journal_entry = self._parse_journey_cloud_entry(
-                        raw_data, entry_dir_path
-                    )
+                    journal_entry = self._parse_journey_cloud_entry(raw_data, entry_dir_path)
                     all_journal_entries.append(journal_entry)
                 except Exception as e:
                     print(f"Error parsing entry {entry_dir_name}: {e}")

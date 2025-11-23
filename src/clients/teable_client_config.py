@@ -1,9 +1,5 @@
-import os
-
 # --- Teable API Configuration ---
-TEABLE_API_URL = (
-    "https://app.teable.ai"  # Default value, will be overridden by env var if set
-)
+TEABLE_API_URL = "https://app.teable.ai"  # Default value, will be overridden by env var if set
 TEABLE_API_TOKEN = None
 TEABLE_BASE_ID = None
 

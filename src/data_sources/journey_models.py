@@ -1,23 +1,22 @@
 from dataclasses import dataclass, field
-from typing import Any, Optional, List
-import json
+from typing import Any
 
 
 @dataclass
 class JourneyLocation:
-    lat: Optional[float] = None
-    lng: Optional[float] = None
-    name: Optional[str] = None
-    altitude: Optional[float] = None
+    lat: float | None = None
+    lng: float | None = None
+    name: str | None = None
+    altitude: float | None = None
 
 
 @dataclass
 class JourneyWeather:
-    id: Optional[int] = None
-    degreeC: Optional[float] = None
-    description: Optional[str] = None
-    icon: Optional[str] = None
-    place: Optional[str] = None
+    id: int | None = None
+    degreeC: float | None = None
+    description: str | None = None
+    icon: str | None = None
+    place: str | None = None
 
 
 @dataclass
@@ -31,18 +30,18 @@ class JourneyCloudEntry:
     # Optional fields with defaults
     favourite: bool = False
     sentiment: float = 0.0
-    address: Optional[str] = None
-    location: Optional[JourneyLocation] = None
-    weather: Optional[JourneyWeather] = None
-    attachments: List[str] = field(default_factory=list)
-    tags: List[str] = field(default_factory=list)
+    address: str | None = None
+    location: JourneyLocation | None = None
+    weather: JourneyWeather | None = None
+    attachments: list[str] = field(default_factory=list)
+    tags: list[str] = field(default_factory=list)
     encrypted: bool = False
     version: int = 1
     activity: int = 0
-    music: Optional[Any] = None
+    music: Any | None = None
     type: str = "html"
     schemaVersion: int = 2
-    createdAt: Optional[str] = None
+    createdAt: str | None = None
 
     @classmethod
     def from_dict(cls, data: dict) -> "JourneyCloudEntry":
@@ -56,11 +55,11 @@ class JourneyCloudEntry:
 
         # Return a new instance, providing only the keys the dataclass expects
         return cls(
-            id=data.get("id"),
-            dateOfJournal=data.get("dateOfJournal"),
+            id=data.get("id", ""),
+            dateOfJournal=data.get("dateOfJournal", ""),
             text=data.get("text", ""),
-            timezone=data.get("timezone"),
-            updatedAt=data.get("updatedAt"),
+            timezone=data.get("timezone", ""),
+            updatedAt=data.get("updatedAt", ""),
             createdAt=data.get("createdAt"),
             favourite=data.get("favourite", False),
             sentiment=data.get("sentiment", 0.0),

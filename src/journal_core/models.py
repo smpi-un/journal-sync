@@ -1,4 +1,3 @@
-
 import uuid
 from dataclasses import dataclass, field
 from datetime import datetime
@@ -29,9 +28,7 @@ class JournalEntry:
     # --- コンテキスト情報 (気分・活動) ---
     mood_label: str | None = None  # 気分ラベル (例: "最高", "最悪")
     mood_score: float | None = None  # 気分スコア (数値)
-    activities: list[str] = field(
-        default_factory=list
-    )  # 活動リスト (例: ["仕事", "運動"])
+    activities: list[str] = field(default_factory=list)  # 活動リスト (例: ["仕事", "運動"])
 
     # --- 位置情報 (フラット化) ---
     location_lat: float | None = None  # 緯度
@@ -77,9 +74,7 @@ class JournalEntry:
         journey_dict: dict[str, Any] = {
             "id": self.id,
             "dateOfJournal": format_dt(self.entry_at),
-            "createdAt": format_dt(
-                self.created_at or self.entry_at
-            ),  # Fallback to entry_at
+            "createdAt": format_dt(self.created_at or self.entry_at),  # Fallback to entry_at
             "updatedAt": format_dt(self.modified_at),
             "timezone": self.timezone,
             "tags": self.tags or [],
@@ -106,7 +101,7 @@ class JournalEntry:
             journey_dict["activity"] = 0
 
         # Handle nested location object
-        location = {}
+        location: dict[str, Any] = {}
         if self.location_lat is not None:
             location["latitude"] = self.location_lat
         if self.location_lon is not None:
@@ -119,7 +114,7 @@ class JournalEntry:
             journey_dict["location"] = location
 
         # Handle nested weather object
-        weather = {}
+        weather: dict[str, Any] = {}
         if self.weather_temperature is not None:
             weather["temperature"] = self.weather_temperature
         if self.weather_condition is not None:
@@ -133,11 +128,7 @@ class JournalEntry:
 
         # Handle attachments (extract filenames)
         if self.media_attachments:
-            journey_dict["attachments"] = [
-                att.get("filename")
-                for att in self.media_attachments
-                if att.get("filename")
-            ]
+            journey_dict["attachments"] = [att.get("filename") for att in self.media_attachments if att.get("filename")]
 
         # Remove keys with None values for a cleaner output, similar to original JSON
         return {k: v for k, v in journey_dict.items() if v is not None}
@@ -153,4 +144,3 @@ class JournalImage(JournalAttachment):
 
 class JournalVideo(JournalAttachment):
     pass
-
