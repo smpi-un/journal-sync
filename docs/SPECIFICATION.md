@@ -7,9 +7,10 @@ Currently supported and targeted backends include:
 -   **Teable**
 -   **NocoDB** (under active development due to v3 API issues)
 -   **Grist**
+-   **Payload CMS**
 
 ## Current State (as of latest update)
-A Python script (`src/main.py`) exists that successfully imports data into Teable and Grist. The NocoDB client is currently experiencing issues with its v3 API integration and requires further development.
+A Python script (`src/main.py`) exists that successfully imports data into Teable, Grist, and Payload CMS. The NocoDB client is currently experiencing issues with its v3 API integration and requires further development.
 
 ## Desired Features & Specifications
 
@@ -33,6 +34,7 @@ A Python script (`src/main.py`) exists that successfully imports data into Teabl
 ### 4. Automatic Table & Column Creation
 -   The script should automatically create the necessary tables (e.g., "JourneyEntries" and "Attachments") if they do not already exist in the chosen backend.
 -   It should also ensure that all required columns for these tables are present, adding them if they are missing. This includes correctly setting up link columns and the `CalendarEntryAt` column for calendar views.
+-   **Note for Payload CMS:** Collection creation is handled by defining collections in the Payload project's code, not via the API. The client verifies collection existence instead of creating it.
 
 ### 5. Client-Specific Implementations
 
@@ -53,3 +55,9 @@ A Python script (`src/main.py`) exists that successfully imports data into Teabl
 -   **Table Naming:** "JournalEntries" for journal entries.
 -   **Field Mapping:** Defined in `clients/grist_client_config.py`.
 -   **API Interaction:** Uses Grist's REST API.
+
+#### Payload CMS Client
+-   **Status:** Functional. Supports upload and download of entries.
+-   **Collection Naming:** The collection "slug" is defined in `clients/payload_client_config.py` (defaults to "journals").
+-   **Field Mapping:** Handled within `clients/payload_client.py`.
+-   **API Interaction:** Uses Payload's REST API.

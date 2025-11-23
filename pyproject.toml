@@ -34,10 +34,6 @@ select = [
     "UP", # pyupgrade
 ]
 
-# formatセクションを追加
-[tool.ruff.format]
-include = ["src", "utils", "tests"]
-
 
 [tool.mypy]
 python_version = "3.12"

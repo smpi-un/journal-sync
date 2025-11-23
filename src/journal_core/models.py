@@ -1,3 +1,4 @@
+
 import uuid
 from dataclasses import dataclass, field
 from datetime import datetime
@@ -144,3 +145,12 @@ class JournalEntry:
 
 class JournalAttachment:
     pass
+
+
+class JournalImage(JournalAttachment):
+    pass
+
+
+class JournalVideo(JournalAttachment):
+    pass
+

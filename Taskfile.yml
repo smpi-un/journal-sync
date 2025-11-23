@@ -7,10 +7,10 @@ tasks:
     cmds:
       - uv run pytest
 
-  test2:
+  lint:
     desc: "Ruffでlintチェックを実行します"
     cmds:
-      - echo "hello from lint"
+      - uv run ruff check
 
   format:
     desc: "Ruffでフォーマットを実行します"
@@ -20,7 +20,7 @@ tasks:
   typecheck:
     desc: "mypyで型チェックを実行します"
     cmds:
-      - uv run mypy
+      - uv run mypy src
 
   check:
     desc: "全てのチェック（lint, typecheck, test）を実行します"

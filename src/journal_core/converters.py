@@ -46,6 +46,7 @@ def journey_to_journal(
         modified_at=parse_dt(journey_entry.updatedAt),
         timezone=journey_entry.timezone,
         text_content=journey_entry.text,
+        rich_text_content=journey_entry.text,
         tags=journey_entry.tags,
         is_favorite=journey_entry.favourite,
         mood_score=journey_entry.sentiment,

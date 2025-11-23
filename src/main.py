@@ -6,6 +6,7 @@ from dotenv import load_dotenv  # Added this line
 
 from clients.grist_client import GristJournalClient
 from clients.nocodb_client import NocoDBJournalClient
+from clients.payload_client import PayloadCmsJournalClient
 from clients.teable_client import TeableJournalClient
 from data_sources.journey_cloud_source import JourneyCloudDataSource
 from journal_core.manager import JournalManager
@@ -91,9 +92,16 @@ def main(source_data_path: str, client_type: str = "teable"):
         if api_url is None or api_key is None or doc_id is None:
             raise Exception("")
         journal_client = GristJournalClient(api_url, api_key, doc_id)
+    elif client_type == "payload":
+        api_url = config.get("PAYLOAD_API_URL")
+        api_key = config.get("PAYLOAD_API_KEY")
+        auth_slug = config.get("PAYLOAD_AUTH_COLLECTION_SLUG", "users")
+        if api_url is None or api_key is None:
+            raise Exception("PAYLOAD_API_URL and PAYLOAD_API_KEY must be set in .env file.")
+        journal_client = PayloadCmsJournalClient(api_url, api_key, auth_slug)
     else:
         raise ValueError(
-            f"Unknown client type: {client_type}. Choose 'teable', 'nocodb', or 'grist'."
+            f"Unknown client type: {client_type}. Choose 'teable', 'nocodb', 'grist', or 'payload'."
         )
 
     # 3. Initialize and run Journal Manager
@@ -109,7 +117,7 @@ def main(source_data_path: str, client_type: str = "teable"):
 if __name__ == "__main__":
     load_dotenv()  # Added this line
     parser = argparse.ArgumentParser(
-        description="Import journal entries from Journey.Cloud export directories into a specified client (Teable, NocoDB, or Grist)."
+        description="Import journal entries from Journey.Cloud export directories into a specified client (Teable, NocoDB, Grist, or Payload)."
     )
 
     parser.add_argument(
@@ -123,7 +131,7 @@ if __name__ == "__main__":
         "--client",
         type=str,
         default="teable",
-        choices=["teable", "nocodb", "grist"],
+        choices=["teable", "nocodb", "grist", "payload"],
         help="The client to which the journal entries will be imported. Defaults to 'teable'.",
     )
 

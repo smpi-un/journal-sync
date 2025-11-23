@@ -1,22 +1,22 @@
-# Journal Teable/NocoDB/Grist Importer
+# Journal Importer for Teable/NocoDB/Grist/Payload
 
-This project provides a Python script to import journal entries exported from Journey.Cloud into various backend services like Teable, NocoDB, and Grist.
+This project provides a Python script to import journal entries exported from Journey.Cloud into various backend services like Teable, NocoDB, Grist, and Payload CMS.
 
 ## Features
 
--   **Multi-Backend Support:** Supports Teable, NocoDB, and Grist.
+-   **Multi-Backend Support:** Supports Teable, NocoDB, Grist, and Payload CMS.
 -   **Journey.Cloud Data Import:** Processes ZIP archives exported from Journey.Cloud, extracting journal entries and their associated media.
 -   **Download and Display Data:** Allows downloading and displaying journal entries from configured backends.
--   **Calendar-Specific Date Columns:** Adds dedicated date columns for calendar views in backends.
 -   **Conditional Updates:** Prevents re-importing older entries by comparing modification timestamps.
--   **Automatic Table/Column Creation:** Automatically sets up necessary tables and columns in the target backend if they don't exist.
--   **Attachment Handling:** Imports media attachments and links them to their respective journal entries.
+-   **Automatic Table/Column Creation:** For applicable backends (Grist, Teable, NocoDB), automatically sets up necessary tables and columns if they don't exist.
+-   **Attachment Handling:** Imports media attachments and links them to their respective journal entries (functionality varies by client).
 
 ## Supported Backends
 
 -   **Teable:** A collaborative database.
 -   **NocoDB:** An open-source Airtable alternative.
 -   **Grist:** A modern relational spreadsheet.
+-   **Payload CMS:** A headless, code-first CMS.
 
 ## Setup
 
@@ -40,36 +40,27 @@ This project provides a Python script to import journal entries exported from Jo
     ```bash
     cp .env.example .env
     ```
-    Edit the `.env` file:
+    Edit the `.env` file with your credentials. For Payload CMS, the required variables are:
     ```
-    # Teable API Configuration
-    TEABLE_API_URL="https://app.teable.ai"
-    TEABLE_API_TOKEN="YOUR_TEABLE_API_TOKEN"
-    TEABLE_BASE_ID="YOUR_TEABLE_BASE_ID"
-
-    # NocoDB API Configuration
-    NOCODB_URL="http://localhost:8080"
-    NOCODB_API_TOKEN="YOUR_NOCODB_API_TOKEN"
-    NOCODB_PROJECT_ID="YOUR_NOCODB_PROJECT_ID"
-
-    # Grist API Configuration
-    GRIST_API_URL="https://your-grist-instance.grist.us"
-    GRIST_API_KEY="YOUR_GRIST_API_KEY"
-    GRIST_DOC_ID="YOUR_GRIST_DOC_ID"
+    # Payload CMS API Configuration
+    PAYLOAD_API_URL="http://localhost:3000"
+    PAYLOAD_API_KEY="YOUR_PAYLOAD_API_KEY"
+    # The slug of the collection that has API key authentication enabled (e.g., "users")
+    PAYLOAD_AUTH_COLLECTION_SLUG="users"
     ```
 
 ## Usage
 
-Run the script with the path to your Journey.Cloud export ZIP file(s) and specify the target client.
+Run the main script with the path to your Journey.Cloud export ZIP file(s) and specify the target client.
 
 ```bash
-uv run python src/main.py "path/to/your/journey_export.zip" --client teable
+uv run python src/main.py "path/to/your/journey_export.zip" --client payload
 ```
 
 You can specify multiple paths or use wildcards:
 
 ```bash
-uv run python src/main.py "path/to/exports/*.zip" --client nocodb
+uv run python src/main.py "path/to/exports/*.zip" --client teable
 ```
 
 ### Available Clients
@@ -77,10 +68,21 @@ uv run python src/main.py "path/to/exports/*.zip" --client nocodb
 -   `teable`: Imports data into Teable.
 -   `nocodb`: Imports data into NocoDB.
 -   `grist`: Imports data into Grist.
+-   `payload`: Imports data into Payload CMS.
+
+### Manual Connection Test
+
+A helper script is available to test the connection and round-trip data integrity with a running Payload CMS instance. This is useful for debugging your connection without performing a full import.
+
+1.  Ensure your `.env` file is configured with the correct `PAYLOAD_API_URL` and `PAYLOAD_API_KEY` for your target environment.
+2.  Run the script:
+    ```bash
+    uv run python utils/run_payload_test.py
+    ```
 
 ## Development Status
 
--   **Teable, NocoDB & Grist:** Functionality for importing journal entries, handling attachments, downloading data, and adding calendar-specific date columns is implemented.
+-   **Teable, NocoDB, Grist, Payload:** Functionality for importing and downloading journal entries is implemented. Attachment handling and automatic schema creation vary by client.
 
 ## Contributing
 
