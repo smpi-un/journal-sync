@@ -5,11 +5,27 @@ from typing import Any
 
 
 @dataclass
+class MediaAttachment:
+    """
+    Represents a media attachment with its metadata, decoupled from any specific backend.
+    """
+
+    id: str  # The unique identifier for this attachment entry (e.g., the block ID in Payload)
+    file_id: str  # The unique identifier for the file itself in the storage system
+    filename: str | None = None
+    url: str | None = None
+    mime_type: str | None = None
+    filesize: int | None = None
+    processing_meta: dict | None = None  # For storing metadata about processing (e.g., compression)
+
+
+@dataclass
 class JournalEntry:
     entry_at: datetime  # エントリー日時 (必須)
 
     # --- 基本識別情報 ---
     id: str = field(default_factory=lambda: str(uuid.uuid4()))
+    doc_id: str | None = None  # Payload CMSなどのDBにおけるドキュメントID
     timezone: str | None = None  # タイムゾーン (例: "Asia/Tokyo")
     created_at: datetime | None = None  # 作成日時
     modified_at: datetime | None = None  # 更新日時
@@ -47,12 +63,8 @@ class JournalEntry:
     device_name: str | None = None  # 作成デバイス名
     step_count: int | None = None  # 歩数
 
-    # --- メディア情報 (準フラット化) ---
-    # 完全にフラットにするのは難しいため、ファイルパスのリストや
-    # JSON形式の文字列として保持する妥協案も考えられます。
-    # ここでは扱いやすさを残すため、最小限の辞書リストとして定義します。
-    # 例: [{"type": "photo", "path": "/img/a.jpg", "caption": "夕日"}]
-    media_attachments: list[dict[str, Any]] = field(default_factory=list)
+    # --- メディア情報 ---
+    media_attachments: list[MediaAttachment] = field(default_factory=list)
 
     # --- 出所情報 (フラット化) ---
     source_app_name: str = ""  # 元アプリ名 (必須にした方が良いが初期値空文字)
@@ -128,7 +140,7 @@ class JournalEntry:
 
         # Handle attachments (extract filenames)
         if self.media_attachments:
-            journey_dict["attachments"] = [att.get("filename") for att in self.media_attachments if att.get("filename")]
+            journey_dict["attachments"] = [att.filename for att in self.media_attachments if att.filename]
 
         # Remove keys with None values for a cleaner output, similar to original JSON
         return {k: v for k, v in journey_dict.items() if v is not None}

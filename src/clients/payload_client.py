@@ -1,4 +1,5 @@
 import json
+import os
 from dataclasses import asdict, dataclass, field
 from datetime import datetime
 from typing import Any
@@ -7,9 +8,9 @@ from urllib.parse import urljoin
 import requests
 
 from journal_core.interfaces import AbstractJournalClient
-from journal_core.models import JournalEntry
+from journal_core.models import JournalEntry, MediaAttachment
 
-from .payload_client_config import JOURNAL_COLLECTION_SLUG
+from .payload_client_config import FILES_COLLECTION_SLUG, JOURNAL_COLLECTION_SLUG
 
 # --- Payload CMS Specific Data Models ---
 # These models map directly to the Payload CMS collection structure for sending data.
@@ -18,7 +19,11 @@ from .payload_client_config import JOURNAL_COLLECTION_SLUG
 
 @dataclass
 class PayloadCmsAttachment:
-    file: str  # ID of the uploaded file in the 'files' collection
+    """Represents an attachment link within a journal entry."""
+
+    id: str  # The ID of the document in the 'attachments' collection of the journal entry
+    file: str | dict[str, Any] | None = None  # ID of the file or the full file object
+    processing_meta: dict | None = None
 
 
 @dataclass
@@ -63,7 +68,7 @@ class PayloadCmsJournalEntry:
     title: str | None = None
     richTextContent: Any | None = None
     textContent: str | None = None
-    attachments: list[PayloadCmsAttachment] = field(default_factory=list)
+    attachments: list[dict] | list[PayloadCmsAttachment] = field(default_factory=list)
     isFavorite: bool = False
     isPinned: bool = False
     notebook: str | None = None
@@ -85,7 +90,12 @@ class PayloadCmsJournalEntry:
 
 
 def _journal_entry_to_payload_cms_entry(entry: JournalEntry) -> PayloadCmsJournalEntry:
-    """Converts a generic JournalEntry to a PayloadCmsJournalEntry."""
+    """
+    Converts a generic JournalEntry to a PayloadCmsJournalEntry for CREATION.
+    NOTE: This function intentionally leaves `attachments` empty. The calling
+    function (`register_entry`) is responsible for handling file uploads and
+    populating the attachments array itself.
+    """
 
     # Handle nested structures
     location = PayloadCmsLocation(
@@ -114,7 +124,7 @@ def _journal_entry_to_payload_cms_entry(entry: JournalEntry) -> PayloadCmsJourna
     )
     source_data = {k: v for k, v in asdict(source).items() if v is not None}
 
-    # TODO: Implement attachment mapping
+    # ATTACHMENTS ARE HANDLED BY THE CALLING `register_entry` METHOD
     attachments: list[PayloadCmsAttachment] = []
 
     # Handle rich text conversion
@@ -189,8 +199,27 @@ def _payload_doc_to_journal_entry(doc: dict[str, Any]) -> JournalEntry:
 
     source_imported_at_dt = parse_dt(source.get("importedAt"))
 
+    # Parse attachments (thanks to depth=1)
+    media_attachments: list[MediaAttachment] = []
+    if doc.get("attachments"):
+        for att_block in doc["attachments"]:
+            file_obj = att_block.get("file")
+            if file_obj and isinstance(file_obj, dict):
+                media_attachments.append(
+                    MediaAttachment(
+                        id=att_block["id"],  # This is the ID of the attachment *block*
+                        file_id=file_obj["id"],  # This is the ID of the file itself
+                        filename=file_obj.get("filename"),
+                        url=file_obj.get("url"),
+                        mime_type=file_obj.get("mimeType"),
+                        filesize=file_obj.get("filesize"),
+                        processing_meta=att_block.get("processing_meta"),
+                    )
+                )
+
     return JournalEntry(
         id=source.get("originalId", ""),
+        doc_id=doc.get("id"),
         entry_at=entry_at_dt,
         timezone=doc.get("timezone"),
         created_at=parse_dt(doc.get("created_at")),
@@ -216,7 +245,7 @@ def _payload_doc_to_journal_entry(doc: dict[str, Any]) -> JournalEntry:
         weather_pressure=weather.get("pressure"),
         device_name=doc.get("deviceName"),
         step_count=doc.get("stepCount"),
-        media_attachments=[],  # TODO: Implement attachment download
+        media_attachments=media_attachments,
         source_app_name=source.get("appName"),
         source_original_id=source.get("originalId"),
         source_imported_at=source_imported_at_dt if source_imported_at_dt else datetime.now(),
@@ -231,18 +260,24 @@ class PayloadCmsJournalClient(AbstractJournalClient):
         if not api_url or not api_key:
             raise ValueError("Payload CMS API URL and API Key must be provided.")
 
-        self.base_url = urljoin(api_url, "api/")
+        self.api_url = api_url
+        self.base_url = urljoin(self.api_url, "api/")
         self.headers = {
             "Authorization": f"{auth_collection_slug} API-Key {api_key}",
-            "Content-Type": "application/json",
         }
         self.collection_slug = JOURNAL_COLLECTION_SLUG
+        self.files_slug = FILES_COLLECTION_SLUG
 
     def _make_request(self, method: str, path: str, **kwargs) -> dict[str, Any]:
         """Helper function to make requests to the Payload API."""
         url = urljoin(self.base_url, path.lstrip("/"))
+        # Ensure Content-Type is set if not provided for JSON-sending requests
+        headers = self.headers.copy()
+        if "json" in kwargs and "Content-Type" not in headers:
+            headers["Content-Type"] = "application/json"
+
         try:
-            response = requests.request(method, url, headers=self.headers, **kwargs)
+            response = requests.request(method, url, headers=headers, **kwargs)
             response.raise_for_status()
             # Handle cases where response body is empty (e.g., 204 No Content)
             if response.status_code == 204:
@@ -253,6 +288,46 @@ class PayloadCmsJournalClient(AbstractJournalClient):
             if e.response:
                 print(f"Response body: {e.response.text}")
             raise
+
+    def get_file_details(self, file_id: str) -> dict[str, Any]:
+        """Fetches the full document for a specific file."""
+        return self._make_request("GET", f"{self.files_slug}/{file_id}")
+
+    def download_file_by_url(self, url: str) -> bytes:
+        """Downloads the binary content of a file from its full URL."""
+        full_url = urljoin(self.api_url, url)
+        try:
+            response = requests.get(full_url, headers=self.headers)
+            response.raise_for_status()
+            return response.content
+        except requests.exceptions.RequestException as e:
+            print(f"Error downloading file from {full_url}: {e}")
+            raise
+
+    def upload_file(self, file_data: bytes, filename: str) -> dict[str, Any]:
+        """Uploads a file to the 'files' collection."""
+        files = {"file": (filename, file_data)}
+        # No 'Content-Type' in headers for multipart/form-data, requests handles it
+        upload_headers = self.headers.copy()
+        if "Content-Type" in upload_headers:
+            del upload_headers["Content-Type"]
+
+        url = urljoin(self.base_url, self.files_slug.lstrip("/"))
+        try:
+            response = requests.post(url, headers=upload_headers, files=files)
+            response.raise_for_status()
+            return response.json()["doc"]  # The created doc is nested here
+        except requests.exceptions.RequestException as e:
+            print(f"Error uploading file to Payload CMS: {e}")
+            if e.response:
+                print(f"Response body: {e.response.text}")
+            raise
+
+    def update_journal_entry_attachments(self, journal_id: str, attachments_payload: list[dict]) -> Any:
+        """Updates only the attachments field for a specific journal entry."""
+        update_path = f"{self.collection_slug}/{journal_id}"
+        payload = {"attachments": attachments_payload}
+        return self._make_request("PATCH", update_path, json=payload)
 
     def _payload_entry_to_dict(self, entry: PayloadCmsJournalEntry) -> dict[str, Any]:
         """Converts a PayloadCmsJournalEntry to a dictionary, handling datetimes."""
@@ -268,32 +343,63 @@ class PayloadCmsJournalClient(AbstractJournalClient):
             return obj
 
         data = convert_datetimes(data)
-        return {k: v for k, v in data.items() if v is not None}
+        return {k: v for k, v in data.items() if v is not None and v != [] and v != {}}
 
     def register_entry(self, entry: JournalEntry) -> Any:
+        # Step 1: Upload any new local files and get their IDs.
+        uploaded_file_ids = []
+        if entry.media_attachments:
+
+            for att in entry.media_attachments:
+                print(f"    - Inspecting attachment data: {att}")
+                # This logic targets dicts with a 'path', typical of a new import.
+                is_new_upload = isinstance(att, dict) and "path" in att
+                print(f"    - Is this a new file to upload? {is_new_upload}")
+                if is_new_upload:
+                    path_exists = os.path.exists(att["path"])
+                    print(f"    - Checking path: {att['path']}")
+                    print(f"    - Does path exist? {path_exists}")
+                    if path_exists:
+                        print(f"    - Uploading local file: {att['filename']}...")
+                        with open(att["path"], "rb") as f:
+                            file_data = f.read()
+                        uploaded_file_doc = self.upload_file(file_data, att["filename"])
+                        uploaded_file_ids.append(uploaded_file_doc["id"])
+                    else:
+                        print(f"    - WARNING: Path not found for attachment, skipping file: {att['path']}")
+
+                elif isinstance(att, MediaAttachment):
+                    # If we are re-registering an entry that already has a file_id, preserve it.
+                    uploaded_file_ids.append(att.file_id)
+
+        # Step 2: Convert the JournalEntry to the base Payload entry DTO (without attachments).
         payload_entry = _journal_entry_to_payload_cms_entry(entry)
+
+        # Step 3: Create the attachment blocks using the newly uploaded file IDs.
+        payload_entry.attachments = [{"file": file_id} for file_id in uploaded_file_ids]
+        if uploaded_file_ids:
+            print(f"  -> Prepared {len(uploaded_file_ids)} attachments for entry payload.")
+
+        # Step 4: Convert the final DTO to a dict and create the entry.
         payload_dict = self._payload_entry_to_dict(payload_entry)
         return self._make_request("POST", self.collection_slug, json=payload_dict)
 
     def register_entries(self, entries: list[JournalEntry]) -> list[Any]:
-        # Payload does not support batch creation out of the box, so we iterate.
-        return [self.register_entry(entry) for entry in entries]
+        results = []
+        for idx, entry in enumerate(entries):
+            print(f"Registering entry {idx + 1}/{len(entries)} (ID: {entry.id})...")
+            try:
+                result = self.register_entry(entry)
+                results.append(result)
+            except Exception as e:
+                print(f"  ERROR: Failed to register entry {entry.id}. Reason: {e}")
+        return results
 
     def update_entry(self, entry: JournalEntry) -> Any:
-        payload_entry = _journal_entry_to_payload_cms_entry(entry)
-        payload_dict = self._payload_entry_to_dict(payload_entry)
-
-        # Query by our unique key: source.originalId
-        query_path = f"{self.collection_slug}?where[source.originalId][equals]={entry.id}"
-        existing_docs = self._make_request("GET", query_path)
-
-        if existing_docs.get("totalDocs", 0) > 0:
-            doc_id = existing_docs["docs"][0]["id"]
-            update_path = f"{self.collection_slug}/{doc_id}"
-            return self._make_request("PATCH", update_path, json=payload_dict)
-        else:
-            print(f"Warning: Entry with source.originalId '{entry.id}' not found. Creating it.")
-            return self.register_entry(entry)
+        # This update logic is complex as it would need to handle new, modified,
+        # and removed attachments. For now, we focus on `update_journal_entry_attachments`.
+        # A full implementation would require more sophisticated diffing.
+        raise NotImplementedError("A full `update_entry` with attachment handling is not yet implemented.")
 
     def update_entries(self, entries: list[JournalEntry]) -> list[Any]:
         return [self.update_entry(entry) for entry in entries]
@@ -331,5 +437,6 @@ class PayloadCmsJournalClient(AbstractJournalClient):
                 entries.append(_payload_doc_to_journal_entry(doc))
             except Exception as e:
                 doc_id = doc.get("id", "N/A")
-                print(f"Warning: Failed to parse document {doc_id} from Payload. Error: {e}")
+                original_id = doc.get("source", {}).get("originalId", "N/A")
+                print(f"Warning: Failed to parse document {doc_id} (original ID: {original_id}) from Payload. Error: {e}")
         return entries

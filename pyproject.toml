@@ -6,7 +6,6 @@ readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
     "requests>=2.32.5",
-    "teable-client>=1.1.2",
     "python-dotenv>=1.0.1",
 ]
 
@@ -16,6 +15,7 @@ dev = [
     "ruff>=0.14.4",
     "mypy>=1.18.2",
     "go-task-bin>=3.45.5", # The Task binary provider
+    "types-requests>=2.32.4.20250913",
 ]
 
 [tool.ruff]
