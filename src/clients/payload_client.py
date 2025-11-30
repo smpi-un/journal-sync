@@ -349,28 +349,32 @@ class PayloadCmsJournalClient(AbstractJournalClient):
         # Step 1: Upload any new local files and get their IDs.
         uploaded_file_ids = []
         if entry.media_attachments:
-
             for att in entry.media_attachments:
                 print(f"    - Inspecting attachment data: {att}")
-                # This logic targets dicts with a 'path', typical of a new import.
-                is_new_upload = isinstance(att, dict) and "path" in att
+
+                # A new file to upload will have a local 'path'.
+                is_new_upload = bool(att.path and att.filename)
                 print(f"    - Is this a new file to upload? {is_new_upload}")
-                if is_new_upload:
-                    path_exists = os.path.exists(att["path"])
-                    print(f"    - Checking path: {att['path']}")
+
+                if is_new_upload and att.path and att.filename:  # mypy needs explicit checks
+                    path_exists = os.path.exists(att.path)
+                    print(f"    - Checking path: {att.path}")
                     print(f"    - Does path exist? {path_exists}")
                     if path_exists:
-                        print(f"    - Uploading local file: {att['filename']}...")
-                        with open(att["path"], "rb") as f:
+                        print(f"    - Uploading local file: {att.filename}...")
+                        with open(att.path, "rb") as f:
                             file_data = f.read()
-                        uploaded_file_doc = self.upload_file(file_data, att["filename"])
+                        uploaded_file_doc = self.upload_file(file_data, att.filename)
                         uploaded_file_ids.append(uploaded_file_doc["id"])
                     else:
-                        print(f"    - WARNING: Path not found for attachment, skipping file: {att['path']}")
+                        print(f"    - WARNING: Path not found for attachment, skipping file: {att.path}")
 
-                elif isinstance(att, MediaAttachment):
+                elif att.file_id:
                     # If we are re-registering an entry that already has a file_id, preserve it.
+                    print(f"    - Preserving existing file with ID: {att.file_id}")
                     uploaded_file_ids.append(att.file_id)
+                else:
+                    print(f"    - WARNING: Attachment has no valid path or file_id, skipping: {att}")
 
         # Step 2: Convert the JournalEntry to the base Payload entry DTO (without attachments).
         payload_entry = _journal_entry_to_payload_cms_entry(entry)
@@ -438,5 +442,7 @@ class PayloadCmsJournalClient(AbstractJournalClient):
             except Exception as e:
                 doc_id = doc.get("id", "N/A")
                 original_id = doc.get("source", {}).get("originalId", "N/A")
-                print(f"Warning: Failed to parse document {doc_id} (original ID: {original_id}) from Payload. Error: {e}")
+                print(
+                    f"Warning: Failed to parse document {doc_id} (original ID: {original_id}) from Payload. Error: {e}"
+                )
         return entries

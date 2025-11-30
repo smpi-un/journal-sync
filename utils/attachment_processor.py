@@ -3,7 +3,6 @@ import datetime
 import io
 import os
 import pathlib
-import sys
 import uuid
 
 from dotenv import load_dotenv
@@ -32,14 +31,12 @@ def has_been_processed(meta: dict | None) -> bool:
     return any(item.get("agent_name") == PROCESS_AGENT_NAME for item in meta)
 
 
-def convert_to_webp(
-    image_bytes: bytes, original_filename: str, quality: int = 85
-) -> tuple[bytes | None, dict | None]:
+def convert_to_webp(image_bytes: bytes, original_filename: str, quality: int = 85) -> tuple[bytes | None, dict | None]:
     """
     画像データをWebPに変換し、メタデータを生成する
     """
     process_id = str(uuid.uuid4())
-    timestamp = datetime.datetime.now(datetime.timezone.utc).isoformat()
+    timestamp = datetime.datetime.now(datetime.UTC).isoformat()
     original_size = len(image_bytes)
 
     try:
@@ -225,9 +222,7 @@ if __name__ == "__main__":
 
     # Payloadクライアントを初期化
     try:
-        payload_client = PayloadCmsJournalClient(
-            api_url=api_url, api_key=api_key, auth_collection_slug=auth_slug
-        )
+        payload_client = PayloadCmsJournalClient(api_url=api_url, api_key=api_key, auth_collection_slug=auth_slug)
         # 処理を開始
         process_entries(payload_client)
     except Exception as e:

@@ -6,7 +6,7 @@ from data_sources.journey_models import (
     JourneyLocation,
     JourneyWeather,
 )
-from journal_core.models import JournalEntry
+from journal_core.models import JournalEntry, MediaAttachment
 
 
 def journey_to_journal(journey_entry: JourneyCloudEntry, raw_data: dict) -> JournalEntry:
@@ -29,8 +29,10 @@ def journey_to_journal(journey_entry: JourneyCloudEntry, raw_data: dict) -> Jour
     weather_temp = journey_entry.weather.degreeC if journey_entry.weather else None
     weather_cond = journey_entry.weather.description if journey_entry.weather else None
 
-    # Create a simplified representation for media attachments
-    media_attachments = [{"type": "file", "filename": fname} for fname in journey_entry.attachments]
+    # Create MediaAttachment objects
+    media_attachments = [
+        MediaAttachment(id=fname, file_id=fname, filename=fname) for fname in journey_entry.attachments
+    ]
 
     entry_at_dt = parse_dt(journey_entry.dateOfJournal)
     if entry_at_dt is None:
@@ -110,5 +112,5 @@ def journal_to_journey(journal_entry: JournalEntry) -> JourneyCloudEntry:
         location=location,
         weather=weather,
         tags=journal_entry.tags,
-        attachments=[str(att.get("filename")) for att in journal_entry.media_attachments if att.get("filename")],
+        attachments=[att.filename for att in journal_entry.media_attachments if att.filename],
     )

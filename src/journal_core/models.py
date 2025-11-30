@@ -12,6 +12,7 @@ class MediaAttachment:
 
     id: str  # The unique identifier for this attachment entry (e.g., the block ID in Payload)
     file_id: str  # The unique identifier for the file itself in the storage system
+    path: str | None = None  # ローカルファイルパス (アップロードや処理時に使用)
     filename: str | None = None
     url: str | None = None
     mime_type: str | None = None

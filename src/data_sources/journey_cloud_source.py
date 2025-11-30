@@ -4,7 +4,7 @@ from datetime import datetime
 from typing import Any
 
 from journal_core.interfaces import AbstractJournalDataSource
-from journal_core.models import JournalEntry
+from journal_core.models import JournalEntry, MediaAttachment
 
 
 class JourneyCloudDataSource(AbstractJournalDataSource):
@@ -102,7 +102,7 @@ class JourneyCloudDataSource(AbstractJournalDataSource):
         step_count = None  # JourneyCloud sample does not have a 'stepCount' field
 
         # --- メディア情報 (準フラット化) ---
-        media_attachments = []
+        media_attachments: list[MediaAttachment] = []
         attachments_from_json = raw_entry.get("attachments", [])
         if isinstance(attachments_from_json, list):
             for attachment_filename in attachments_from_json:
@@ -110,11 +110,12 @@ class JourneyCloudDataSource(AbstractJournalDataSource):
                 full_attachment_path = os.path.join(entry_dir_path, attachment_filename)
                 if os.path.exists(full_attachment_path):
                     media_attachments.append(
-                        {
-                            "type": "file",  # Assuming all attachments are files for now
-                            "path": full_attachment_path,
-                            "filename": attachment_filename,
-                        }
+                        MediaAttachment(
+                            id=attachment_filename,  # Placeholder ID
+                            file_id=attachment_filename,  # Placeholder file_id
+                            path=full_attachment_path,
+                            filename=attachment_filename,
+                        )
                     )
                 else:
                     print(f"Warning: Attachment file not found: {full_attachment_path}")
