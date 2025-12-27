@@ -94,6 +94,7 @@ def run_test():
 
         fetched_entry = None
         for entry in all_entries:
+            print(entry)
             if entry.id == test_entry_id:
                 fetched_entry = entry
                 break

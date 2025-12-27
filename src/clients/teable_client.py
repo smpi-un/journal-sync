@@ -280,29 +280,28 @@ if __name__ == "__main__":
     base_id = config.get("TEABLE_BASE_ID")
     url = config.get("TEABLE_API_URL", "https://app.teable.ai")
 
-    if not token or not base_id or not url:
+    if token and base_id and url:
+        try:
+            client = TeableJournalClient(api_token=token, base_id=base_id, api_url=url)
+
+            journal_entries = client.download_journal_entries()
+            print(f"Successfully downloaded and parsed {len(journal_entries)} entries.")
+
+            if not journal_entries:
+                print("No entries to process.")
+            else:
+                journey_cloud_entries = [journal_to_journey(entry) for entry in journal_entries]
+                journey_cloud_dicts = [entry.to_dict() for entry in journey_cloud_entries]
+
+                print("\n--- Journey Cloud Formatted JSON (from Teable) ---")
+                print(json.dumps(journey_cloud_dicts, indent=2, ensure_ascii=False))
+                print("----------------------------------------------------")
+
+            print("\nTest finished successfully.")
+
+        except (ValueError, requests.exceptions.RequestException) as e:
+            print(f"An error occurred during the test: {e}")
+            raise
+    else:
         print("Error: Could not read TEABLE_API_TOKEN, TEABLE_BASE_ID, and TEABLE_API_URL from your .env file.")
         print("Please ensure the .env file exists in the root directory and the variables are set correctly.")
-        exit(1)
-
-    try:
-        client = TeableJournalClient(api_token=token, base_id=base_id, api_url=url)
-
-        journal_entries = client.download_journal_entries()
-        print(f"Successfully downloaded and parsed {len(journal_entries)} entries.")
-
-        if not journal_entries:
-            print("No entries to process.")
-        else:
-            journey_cloud_entries = [journal_to_journey(entry) for entry in journal_entries]
-            journey_cloud_dicts = [entry.to_dict() for entry in journey_cloud_entries]
-
-            print("\n--- Journey Cloud Formatted JSON (from Teable) ---")
-            print(json.dumps(journey_cloud_dicts, indent=2, ensure_ascii=False))
-            print("----------------------------------------------------")
-
-        print("\nTest finished successfully.")
-
-    except (ValueError, requests.exceptions.RequestException) as e:
-        print(f"An error occurred during the test: {e}")
-        raise

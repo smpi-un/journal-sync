@@ -30,12 +30,8 @@ def test_to_journey_cloud_dict_full():
         weather_humidity=60.5,
         weather_pressure=1012.5,
         media_attachments=[
-            MediaAttachment(
-                id="1", file_id="1", path="/path/to/image.jpg", filename="image.jpg"
-            ),
-            MediaAttachment(
-                id="2", file_id="2", path="/path/to/video.mp4", filename="video.mp4"
-            ),
+            MediaAttachment(id="1", file_id="1", path="/path/to/image.jpg", filename="image.jpg"),
+            MediaAttachment(id="2", file_id="2", path="/path/to/video.mp4", filename="video.mp4"),
         ],
     )
 
@@ -111,9 +107,7 @@ def test_to_journey_cloud_dict_no_attachments_filename():
         entry_at=datetime.now(),
         media_attachments=[
             MediaAttachment(id="1", file_id="1", path="/path/to/image.jpg", filename=None),  # Missing 'filename'
-            MediaAttachment(
-                id="2", file_id="2", path="/path/to/video.mp4", filename="video.mp4"
-            ),
+            MediaAttachment(id="2", file_id="2", path="/path/to/video.mp4", filename="video.mp4"),
         ],
     )
 

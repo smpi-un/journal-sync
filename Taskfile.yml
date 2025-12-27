@@ -23,9 +23,9 @@ tasks:
       - uv run ruff format .
 
   typecheck:
-    desc: "mypyで型チェックを実行します"
+    desc: "tyで型チェックを実行します"
     cmds:
-      - uv run mypy src
+      - uv run ty check .
 
   check:
     desc: "全てのチェック（lint, typecheck, test）を実行します"

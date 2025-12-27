@@ -7,15 +7,16 @@ requires-python = ">=3.12"
 dependencies = [
     "requests>=2.32.5",
     "python-dotenv>=1.0.1",
+    "pillow>=12.0.0",
 ]
 
 [project.optional-dependencies]
 dev = [
     "pytest>=8.2.2",
     "ruff>=0.14.4",
-    "mypy>=1.18.2",
     "go-task-bin>=3.45.5", # The Task binary provider
     "types-requests>=2.32.4.20250913",
+    "ty>=0.0.7",
 ]
 
 [tool.ruff]
@@ -49,17 +50,13 @@ select = [
     "UP", # pyupgrade
 ]
 
+[tool.ty]
+environment = { python-version = "3.12" }
+[tool.ty.src]
+include = ["src", "utils", "tests"]
+# exclude = ["src/generated"]
 
-[tool.mypy]
-python_version = "3.12"
-# チェック対象をfilesで明示
-files = ["src", "utils", "tests"]
-# mypy_pathは、srcとutils内のインポート解決に役立つため残します
-mypy_path = "src:utils"
-ignore_missing_imports = true
-show_error_codes = true
-pretty = true
-explicit_package_bases = true
+
 
 [tool.pytest.ini_options]
 pythonpath = [

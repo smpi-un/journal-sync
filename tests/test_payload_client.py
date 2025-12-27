@@ -52,7 +52,9 @@ class TestPayloadClient(unittest.TestCase):
                 "appName": payload_entry_obj.source.appName,
                 "originalId": payload_entry_obj.source.originalId,
                 "rawData": payload_entry_obj.source.rawData,
-            },
+            }
+            if payload_entry_obj.source
+            else None,
             "createdAt": "2025-01-01T12:00:00Z",
             "updatedAt": "2025-01-01T12:00:00Z",
         }

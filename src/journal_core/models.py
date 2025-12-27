@@ -17,7 +17,7 @@ class MediaAttachment:
     url: str | None = None
     mime_type: str | None = None
     filesize: int | None = None
-    processing_meta: dict | None = None  # For storing metadata about processing (e.g., compression)
+    processing_meta: list[dict] | None = None  # For storing metadata about processing (e.g., compression)
 
 
 @dataclass

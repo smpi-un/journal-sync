@@ -24,7 +24,7 @@ def is_image_and_supported(filename: str | None) -> bool:
     return any(filename.lower().endswith(ext) for ext in SUPPORTED_IMAGE_EXTENSIONS)
 
 
-def has_been_processed(meta: dict | None) -> bool:
+def has_been_processed(meta: list[dict] | None) -> bool:
     """メタデータを見て、このエージェントで既に処理済みか判断する"""
     if not meta or not isinstance(meta, list):
         return False
@@ -123,6 +123,17 @@ def process_entries(client: PayloadCmsJournalClient):
         new_attachments_payload = []
 
         for attachment in entry.media_attachments:
+            # 必須フィールドのチェック
+            if not attachment.filename or not attachment.url:
+                new_attachments_payload.append(
+                    {
+                        "id": attachment.id,
+                        "file": attachment.file_id,
+                        "processing_meta": attachment.processing_meta or [],
+                    }
+                )
+                continue
+
             # 処理不要なケースをチェック
             if not is_image_and_supported(attachment.filename) or has_been_processed(attachment.processing_meta):
                 # 変更しないので、元の情報をペイロードに追加
@@ -142,7 +153,7 @@ def process_entries(client: PayloadCmsJournalClient):
                 image_bytes = client.download_file_by_url(attachment.url)
                 webp_bytes, metadata = convert_to_webp(image_bytes, attachment.filename)
 
-                if webp_bytes and metadata and metadata["outcome"]["status"] == "success":
+                if webp_bytes and metadata and metadata.get("outcome", {}).get("status") == "success":
                     entry_modified = True
                     # 新しいファイル名を作成
                     new_filename = f"{pathlib.Path(attachment.filename).stem}.webp"
@@ -166,7 +177,11 @@ def process_entries(client: PayloadCmsJournalClient):
                     )
                 else:
                     # 変換失敗またはスキップ
-                    print(f"    -> Conversion failed or was skipped. Reason: {metadata['outcome']['message']}")
+                    if metadata and metadata.get("outcome", {}).get("message"):
+                        print(f"    -> Conversion failed or was skipped. Reason: {metadata['outcome']['message']}")
+                    else:
+                        print("    -> Conversion failed or was skipped for an unknown reason.")
+
                     # 失敗した場合もメタデータを更新して記録する
                     updated_meta = attachment.processing_meta or []
                     if metadata:
@@ -214,11 +229,12 @@ if __name__ == "__main__":
     api_key = os.getenv("PAYLOAD_API_KEY")
     auth_slug = os.getenv("PAYLOAD_AUTH_COLLECTION_SLUG")
 
-    if not all([api_url, api_key, auth_slug]):
-        raise ValueError(
-            "Please ensure PAYLOAD_API_URL, PAYLOAD_API_KEY, and "
-            "PAYLOAD_AUTH_COLLECTION_SLUG are set in your .env file."
-        )
+    if not api_url:
+        raise ValueError("Please ensure PAYLOAD_API_URL is set in your .env file.")
+    if not api_key:
+        raise ValueError("Please ensure PAYLOAD_API_KEY is set in your .env file.")
+    if not auth_slug:
+        raise ValueError("Please ensure PAYLOAD_AUTH_COLLECTION_SLUG is set in your .env file.")
 
     # Payloadクライアントを初期化
     try:

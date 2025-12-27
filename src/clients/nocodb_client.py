@@ -333,27 +333,26 @@ if __name__ == "__main__":
     project_id = config.get("NOCODB_PROJECT_ID")
     url = config.get("NOCODB_URL", "http://localhost:8080")
 
-    if not token or not project_id or not url:
+    if token and project_id and url:
+        try:
+            client = NocoDBJournalClient(api_token=token, project_id=project_id, url=url)
+
+            journal_entries = client.download_journal_entries()
+            print(f"Successfully downloaded and parsed {len(journal_entries)} entries.")
+
+            if not journal_entries:
+                print("No entries to process.")
+            else:
+                journey_cloud_entries = [journal_to_journey(entry) for entry in journal_entries]
+                journey_cloud_dicts = [entry.to_dict() for entry in journey_cloud_entries]
+
+                print("\n--- Journey Cloud Formatted JSON (from NocoDB) ---")
+                print(json.dumps(journey_cloud_dicts, indent=2, ensure_ascii=False))
+                print("----------------------------------------------------")
+
+            print("\nTest finished successfully.")
+
+        except (ValueError, requests.exceptions.RequestException) as e:
+            print(f"An error occurred during the test: {e}")
+    else:
         print("Error: NOCODB_API_TOKEN, NOCODB_PROJECT_ID, and NOCODB_URL must be set in your .env file.")
-        exit(1)
-
-    try:
-        client = NocoDBJournalClient(api_token=token, project_id=project_id, url=url)
-
-        journal_entries = client.download_journal_entries()
-        print(f"Successfully downloaded and parsed {len(journal_entries)} entries.")
-
-        if not journal_entries:
-            print("No entries to process.")
-        else:
-            journey_cloud_entries = [journal_to_journey(entry) for entry in journal_entries]
-            journey_cloud_dicts = [entry.to_dict() for entry in journey_cloud_entries]
-
-            print("\n--- Journey Cloud Formatted JSON (from NocoDB) ---")
-            print(json.dumps(journey_cloud_dicts, indent=2, ensure_ascii=False))
-            print("----------------------------------------------------")
-
-        print("\nTest finished successfully.")
-
-    except (ValueError, requests.exceptions.RequestException) as e:
-        print(f"An error occurred during the test: {e}")

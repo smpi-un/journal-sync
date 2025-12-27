@@ -85,5 +85,6 @@ def test_reconstruction_without_raw_data():
     assert original_journey_entry.id == reconstructed_journey_entry.id
     assert original_journey_entry.dateOfJournal == reconstructed_journey_entry.dateOfJournal
     assert original_journey_entry.text == reconstructed_journey_entry.text
-    assert original_journey_entry.location.lat == reconstructed_journey_entry.location.lat
+    if original_journey_entry.location and reconstructed_journey_entry.location:
+        assert original_journey_entry.location.lat == reconstructed_journey_entry.location.lat
     assert original_journey_entry.attachments == reconstructed_journey_entry.attachments
