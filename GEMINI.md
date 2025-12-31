@@ -21,6 +21,11 @@
 ### 定型タスクの実行
 `Taskfile.yml`で定義されたタスクは `uv run task <タスク名>` で実行できます。
 
+**注意**: `uv run task` コマンドを使用する前に、`Taskfile.yml` が利用する開発依存関係（`go-task-bin`など）がインストールされている必要があります。以下のコマンドで開発依存関係をインストールしてください。
+```bash
+uv sync --extra dev
+```
+
 - **ユニットテストの実行**:
   ```bash
   uv run task test

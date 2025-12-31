@@ -3,6 +3,9 @@ import os
 from datetime import datetime
 from typing import Any
 
+from markdown_it import MarkdownIt
+from markdownify import markdownify
+
 from journal_core.interfaces import AbstractJournalDataSource
 from journal_core.models import JournalEntry, MediaAttachment
 
@@ -47,10 +50,22 @@ class JourneyCloudDataSource(AbstractJournalDataSource):
         # --- コンテンツ ---
         text_content = None
         rich_text_content = None
-        if raw_entry.get("type") == "markdown":
-            rich_text_content = raw_entry.get("text")
+        md = MarkdownIt()
+
+        raw_text = raw_entry.get("text")
+        entry_type = raw_entry.get("type")
+
+        if entry_type == "markdown":
+            text_content = raw_text
+            if raw_text:
+                rich_text_content = md.render(raw_text)
+        elif entry_type == "html":
+            rich_text_content = raw_text
+            if raw_text:
+                text_content = markdownify(raw_text)
         else:
-            text_content = raw_entry.get("text")
+            text_content = raw_text
+            rich_text_content = raw_text
         title = None  # JourneyCloud sample does not have a direct title field
 
         # --- 整理・分類 ---
