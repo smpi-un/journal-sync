@@ -67,6 +67,7 @@ class JourneyCloudDataSource(AbstractJournalDataSource):
             text_content = raw_text
             rich_text_content = raw_text
         title = None  # JourneyCloud sample does not have a direct title field
+        title = "(title)"
 
         # --- 整理・分類 ---
         tags = []

@@ -1,0 +1,9 @@
+repos:
+-   repo: local
+    hooks:
+    -   id: system
+        name: Run project quality checks
+        entry: uv run task pre-commit
+        language: system
+        types: [python]
+        pass_filenames: false
